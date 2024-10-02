@@ -1,5 +1,6 @@
 package Managers;
 
+import Enums.VehicleType;
 import ParkingSpot.ParkingSpot;
 
 import java.util.ArrayList;
@@ -31,7 +32,7 @@ public abstract class ParkingSpotManager {
     }
 
     // Method to park a vehicle in the first available spot
-    public void parkVehicle(String vehicle) {
+    public void parkVehicle(VehicleType vehicle) {
         ParkingSpot availableSpot = findSpace();
         if (availableSpot != null) {
             availableSpot.parkVehicle(vehicle);
@@ -39,7 +40,7 @@ public abstract class ParkingSpotManager {
     }
 
     // Method to unpark a vehicle
-    public void unParkVehicle(String vehicle) {
+    public void unParkVehicle(VehicleType vehicle) {
         for (ParkingSpot spot : parkingSpots) {
             if (!spot.isEmpty() && spot.getVehicle().equals(vehicle)) {
                 spot.unparkVehicle();
