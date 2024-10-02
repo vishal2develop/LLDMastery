@@ -12,14 +12,12 @@ public class Ticket {
 
     private int ticketID;
     private long entryTime;
-    private final VehicleType vehicleType;
-    private final String vehicleLicensePlate;
+    private Vehicle vehicle;
     private ParkingSpot parkingSpot;
 
-    public Ticket(VehicleType vehicleType, String vehicleLicensePlate, ParkingSpot parkingSpot) {
+    public Ticket(Vehicle vehicle, ParkingSpot parkingSpot) {
         this.ticketID=ticketCounter.incrementAndGet(); // unique ticketId
-        this.vehicleType = vehicleType;
-        this.vehicleLicensePlate = vehicleLicensePlate;
+        this.vehicle = vehicle;
         this.parkingSpot = parkingSpot;
         this.entryTime=System.currentTimeMillis();
     }
@@ -33,12 +31,8 @@ public class Ticket {
         return entryTime;
     }
 
-    public VehicleType getVehicleType() {
-        return vehicleType;
-    }
-
-    public String getVehicleLicensePlate() {
-        return vehicleLicensePlate;
+    public Vehicle getVehicle() {
+        return vehicle;
     }
 
     public ParkingSpot getParkingSpot() {

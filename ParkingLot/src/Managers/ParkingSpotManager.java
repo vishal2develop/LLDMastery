@@ -3,6 +3,7 @@ package Managers;
 import Enums.VehicleType;
 import ParkingSpot.ParkingSpot;
 import Ticket.Ticket;
+import Vehicle.Vehicle;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,13 +34,13 @@ public abstract class ParkingSpotManager {
     }
 
     // Method to park a vehicle in the first available spot
-    public Ticket parkVehicle(VehicleType vehicleType, String vehicleLicensePlate) {
+    public Ticket parkVehicle(Vehicle vehicle) {
         ParkingSpot availableSpot = findSpace();
         if (availableSpot != null) {
-            availableSpot.parkVehicle(vehicleType);
-            return new Ticket(vehicleType,vehicleLicensePlate,availableSpot);
+            availableSpot.parkVehicle(vehicle);
+            return new Ticket(vehicle,availableSpot);
         }
-        System.out.println("No available parking spots for " + vehicleLicensePlate);
+        System.out.println("No available parking spots for " + vehicle.getLicensePlate());
         return null;
     }
 

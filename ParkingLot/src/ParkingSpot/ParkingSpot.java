@@ -1,12 +1,13 @@
 package ParkingSpot;
 
 import Enums.VehicleType;
+import Vehicle.Vehicle;
 
 public abstract class ParkingSpot {
     private int id;
     private boolean isEmpty;
     private double price;
-    private VehicleType vehicle;
+    private Vehicle vehicle;
 
     public ParkingSpot(int id, double price) {
         this.id = id;
@@ -14,11 +15,11 @@ public abstract class ParkingSpot {
         this.isEmpty = true; // Initially, the spot is empty
     }
 
-    public void parkVehicle(VehicleType vehicle) {
+    public void parkVehicle(Vehicle vehicle) {
         if (isEmpty) {
             this.vehicle = vehicle;
             this.isEmpty = false;
-            System.out.println("Vehicle parked: " + vehicle);
+            System.out.println("Vehicle parked: " + vehicle.getVehicleType());
         }
         else {
             System.out.println("Spot is already occupied.");
@@ -56,7 +57,7 @@ public abstract class ParkingSpot {
         return price;
     }
 
-    public VehicleType getVehicle() {
+    public Vehicle getVehicle() {
         return vehicle;
     }
 }
