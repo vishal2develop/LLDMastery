@@ -48,13 +48,6 @@ public abstract class ParkingSpotManager {
         ParkingSpot spot = ticket.getParkingSpot();
         spot.unparkVehicle();
         System.out.println("Vehicle with Ticket ID " + ticket.getTicketID() + " has been unparked.");
-//        for (ParkingSpot spot : parkingSpots) {
-//            if (!spot.isEmpty() && spot.getVehicle().equals(vehicle)) {
-//                spot.unparkVehicle();
-//                return;
-//            }
-//        }
-//        System.out.println("Your Vehicle not found in any spot.");
     }
 
     // Abstract method for pricing logic to be defined by the subclass
