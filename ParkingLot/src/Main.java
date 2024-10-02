@@ -5,6 +5,7 @@ import Managers.TwoWheelerParkingSpotManager;
 import ParkingSpot.ParkingSpot;
 import ParkingSpot.TwoWheelerParkingSpot;
 import ParkingSpot.FourWheelerParkingSpot;
+import Ticket.Ticket;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,17 +28,30 @@ public class Main {
 
         // Park a two-wheeler
         System.out.println("Two-Wheeler Parking:");
-        twoWheelerManager.parkVehicle(VehicleType.TWO_WHEELER);
-        System.out.println("Parking Fee: $" + twoWheelerManager.calculateParkingFee());
+        Ticket bikeTicket = twoWheelerManager.parkVehicle(VehicleType.TWO_WHEELER, "111111");  // Now takes vehicle type and license plate
+        if (bikeTicket != null) {
+            System.out.println("Ticket ID: " + bikeTicket.getTicketID());
+            System.out.println("Vehicle License Plate: " + bikeTicket.getVehicleLicensePlate());
+            System.out.println("Parking Spot ID: " + bikeTicket.getParkingSpot().getId());
+            System.out.println("Entry Time: " + bikeTicket.getEntryTime());
+            System.out.println("Parking Fee: $" + twoWheelerManager.calculateParkingFee());
+        }
+
 
         // Park a four-wheeler
         System.out.println("\nFour-Wheeler Parking:");
-        fourWheelerManager.parkVehicle(VehicleType.FOUR_WHEELER);
-        System.out.println("Parking Fee: $" + fourWheelerManager.calculateParkingFee());
+        Ticket carTicket = fourWheelerManager.parkVehicle(VehicleType.FOUR_WHEELER, "22222");  // Now takes vehicle type and license plate
+        if (carTicket != null) {
+            System.out.println("Ticket ID: " + carTicket.getTicketID());
+            System.out.println("Vehicle License Plate: " + carTicket.getVehicleLicensePlate());
+            System.out.println("Parking Spot ID: " + carTicket.getParkingSpot().getId());
+            System.out.println("Entry Time: " + carTicket.getEntryTime());
+            System.out.println("Parking Fee: $" + fourWheelerManager.calculateParkingFee());
+        }
 
         // Unpark the vehicles
         System.out.println("\nUnparking Vehicles:");
-        twoWheelerManager.unParkVehicle(VehicleType.TWO_WHEELER);
-        fourWheelerManager.unParkVehicle(VehicleType.FOUR_WHEELER);
+        twoWheelerManager.unParkVehicle(bikeTicket);
+        fourWheelerManager.unParkVehicle(carTicket);
     }
 }
