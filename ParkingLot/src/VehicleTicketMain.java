@@ -6,6 +6,8 @@ import Managers.TwoWheelerParkingSpotManager;
 import ParkingSpot.ParkingSpot;
 import ParkingSpot.TwoWheelerParkingSpot;
 import ParkingSpot.FourWheelerParkingSpot;
+import Services.ParkingService;
+import Services.TicketService;
 import Ticket.Ticket;
 import Vehicle.FourWheeler;
 import Vehicle.TwoWheeler;
@@ -23,57 +25,55 @@ public class VehicleTicketMain {
         parkingSpots.add(new FourWheelerParkingSpot(3, 20.0));
         parkingSpots.add(new FourWheelerParkingSpot(4, 20.0));
 
+        // Create services
+        ParkingService parkingService = new ParkingService(parkingSpots);
+        TicketService ticketService = new TicketService();
+
         // Create an entrance gate
-        EntranceGate entranceGate = new EntranceGate(1, parkingSpots);
+        EntranceGate entranceGate = new EntranceGate(1, parkingService,ticketService);
 
         // Create vehicles
         Vehicle bike = new TwoWheeler("Bike123");
         Vehicle car = new FourWheeler("Car456");
 
-        // Find and book a parking spot for the bike, then generate a ticket
-        ParkingSpot bikeSpot = entranceGate.bookSpot(bike);
-        Ticket bikeTicket = entranceGate.generateTicket(bike, bikeSpot);
+        // Step 5: Process vehicle entry for the bike
+        System.out.println("\nProcessing entry for Bike...");
+        Ticket bikeTicket = entranceGate.processVehicleEntry(bike);
         if (bikeTicket != null) {
             System.out.println("Ticket ID: " + bikeTicket.getTicketID() + ", Vehicle: " + bikeTicket.getVehicle().getLicensePlate() + ", Spot: " + bikeTicket.getParkingSpot().getId());
         }
 
-        // Find and book a parking spot for the car, then generate a ticket
-        ParkingSpot carSpot = entranceGate.bookSpot(car);
-        Ticket carTicket = entranceGate.generateTicket(car, carSpot);
+        // Step 6: Process vehicle entry for the car
+        System.out.println("\nProcessing entry for Car...");
+        Ticket carTicket = entranceGate.processVehicleEntry(car);
         if (carTicket != null) {
             System.out.println("Ticket ID: " + carTicket.getTicketID() + ", Vehicle: " + carTicket.getVehicle().getLicensePlate() + ", Spot: " + carTicket.getParkingSpot().getId());
         }
 
-//        // Create parking managers
-//        ParkingSpotManager twoWheelerManager = new TwoWheelerParkingSpotManager(twoWheelerSpots);
-//        ParkingSpotManager fourWheelerManager = new FourWheelerParkingSpotManager(fourWheelerSpots);
-//
-//        // Create vehicles
-//        Vehicle bike = new TwoWheeler("Bike123");
-//        Vehicle car = new FourWheeler("Car456");
-//
-//        // Park a two-wheeler
-//        System.out.println("Two-Wheeler Parking:");
-//        Ticket bikeTicket = twoWheelerManager.parkVehicle(bike);  // Now returns a Ticket
-//        System.out.println("Ticket ID: " + bikeTicket.getTicketID());
-//        System.out.println("Vehicle: " + bikeTicket.getVehicle().getLicensePlate());
-//        System.out.println("Parking Spot ID: " + bikeTicket.getParkingSpot().getId());
-//        System.out.println("Entry Time: " + bikeTicket.getEntryTime());
-//        System.out.println("Parking Fee: $" + twoWheelerManager.calculateParkingFee());
-//
-//        // Park a four-wheeler
-//        System.out.println("\nFour-Wheeler Parking:");
-//        Ticket carTicket = fourWheelerManager.parkVehicle(car);  // Now returns a Ticket
-//        System.out.println("Ticket ID: " + carTicket.getTicketID());
-//        System.out.println("Vehicle: " + carTicket.getVehicle().getLicensePlate());
-//        System.out.println("Parking Spot ID: " + carTicket.getParkingSpot().getId());
-//        System.out.println("Entry Time: " + carTicket.getEntryTime());
-//        System.out.println("Parking Fee: $" + fourWheelerManager.calculateParkingFee());
-//
-        // Unpark the vehicles using the tickets
-//        System.out.println("\nUnparking Vehicles:");
-//        bikeTicket.(bikeTicket);  // Use the ticket to unpark
-//        fourWheelerManager.unParkVehicle(carTicket);  // Use the ticket to unpark
+        // Step 7: Unpark the bike using the ticket
+        System.out.println("\nUnparking Bike...");
+        if (bikeTicket != null) {
+            entranceGate.processVehicleExit(bikeTicket);  // Unpark the bike using its ticket
+        }
+
+        System.out.println("\nProcessing entry for Bike2...");
+        Ticket bikeTicket2 = entranceGate.processVehicleEntry(bike);
+        if (bikeTicket2 != null) {
+            System.out.println("Ticket ID: " + bikeTicket2.getTicketID() + ", Vehicle: " + bikeTicket2.getVehicle().getLicensePlate() + ", Spot: " + bikeTicket2.getParkingSpot().getId());
+        }
+
+
+
+        // Step 8: Unpark the car using the ticket
+        System.out.println("\nUnparking Car...");
+        if (carTicket != null) {
+            entranceGate.processVehicleExit(carTicket);  // Unpark the car using its ticket
+        }
+
+        System.out.println("\nUnparking Bike2...");
+        if (bikeTicket2 != null) {
+            entranceGate.processVehicleExit(bikeTicket2);  // Unpark the bike using its ticket
+        }
 
     }
 }

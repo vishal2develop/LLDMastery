@@ -8,18 +8,20 @@ public abstract class ParkingSpot {
     private boolean isEmpty;
     private double price;
     private Vehicle vehicle;
+    private String vehicleLicensePlate;  // Stores the license plate of the parked vehicle
 
     public ParkingSpot(int id, double price) {
         this.id = id;
         this.price = price;
         this.isEmpty = true; // Initially, the spot is empty
+        this.vehicleLicensePlate = null;  // No vehicle is parked initially
     }
 
-    public void parkVehicle(Vehicle vehicle) {
+    public void parkVehicle(String vehicleLicensePlate) {
         if (isEmpty) {
-            this.vehicle = vehicle;
+            this.vehicleLicensePlate = vehicleLicensePlate;
             this.isEmpty = false;
-            System.out.println("Vehicle parked: " + vehicle.getVehicleType());
+            System.out.println("Vehicle parked: " + vehicleLicensePlate);
         }
         else {
             System.out.println("Spot is already occupied.");
@@ -27,9 +29,9 @@ public abstract class ParkingSpot {
     }
     public void unparkVehicle(){
         if(!isEmpty){
-            this.vehicle = null;
+            System.out.println("Vehicle unparked: " + vehicleLicensePlate);
+            this.vehicleLicensePlate = null;
             this.isEmpty = true;
-            System.out.println("Spot is now empty.");
         }
         else {
             System.out.println("Spot is already empty.");
