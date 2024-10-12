@@ -1,5 +1,7 @@
 import EntranceGate.EntranceGate;
+import Enums.PaymentType;
 import Enums.VehicleType;
+import ExitGate.ExitGate;
 import Managers.FourWheelerParkingSpotManager;
 import Managers.ParkingSpotManager;
 import Managers.TwoWheelerParkingSpotManager;
@@ -7,6 +9,7 @@ import ParkingSpot.ParkingSpot;
 import ParkingSpot.TwoWheelerParkingSpot;
 import ParkingSpot.FourWheelerParkingSpot;
 import Services.ParkingService;
+import Services.PaymentService;
 import Services.TicketService;
 import Ticket.Ticket;
 import Vehicle.FourWheeler;
@@ -28,9 +31,11 @@ public class VehicleTicketMain {
         // Create services
         ParkingService parkingService = new ParkingService(parkingSpots);
         TicketService ticketService = new TicketService();
+        PaymentService paymentService = new PaymentService();
 
         // Create an entrance gate
         EntranceGate entranceGate = new EntranceGate(1, parkingService,ticketService);
+        ExitGate exitGate = new ExitGate(1, parkingService,ticketService,paymentService);
 
         // Create vehicles
         Vehicle bike = new TwoWheeler("Bike123");
@@ -53,7 +58,7 @@ public class VehicleTicketMain {
         // Step 7: Unpark the bike using the ticket
         System.out.println("\nUnparking Bike...");
         if (bikeTicket != null) {
-            entranceGate.processVehicleExit(bikeTicket);  // Unpark the bike using its ticket
+            exitGate.processVehicleExit(bikeTicket, PaymentType.UPI);  // Unpark the bike using its ticket
         }
 
         System.out.println("\nProcessing entry for Bike2...");
@@ -67,12 +72,12 @@ public class VehicleTicketMain {
         // Step 8: Unpark the car using the ticket
         System.out.println("\nUnparking Car...");
         if (carTicket != null) {
-            entranceGate.processVehicleExit(carTicket);  // Unpark the car using its ticket
+            exitGate.processVehicleExit(carTicket,PaymentType.CASH);  // Unpark the car using its ticket
         }
 
         System.out.println("\nUnparking Bike2...");
         if (bikeTicket2 != null) {
-            entranceGate.processVehicleExit(bikeTicket2);  // Unpark the bike using its ticket
+            exitGate.processVehicleExit(bikeTicket2,PaymentType.UPI);  // Unpark the bike using its ticket
         }
 
     }
