@@ -14,12 +14,14 @@ public class Ticket {
     private long entryTime;
     private Vehicle vehicle;
     private ParkingSpot parkingSpot;
+    private final int gateNo;  // Information about which gate the vehicle entered from
 
-    public Ticket(Vehicle vehicle, ParkingSpot parkingSpot) {
+    public Ticket(Vehicle vehicle, ParkingSpot parkingSpot, int gateNo) {
         this.ticketID=ticketCounter.incrementAndGet(); // unique ticketId
         this.vehicle = vehicle;
         this.parkingSpot = parkingSpot;
         this.entryTime=System.currentTimeMillis();
+        this.gateNo= gateNo;
     }
 
     // Getters
@@ -37,6 +39,10 @@ public class Ticket {
 
     public ParkingSpot getParkingSpot() {
         return parkingSpot;
+    }
+
+    public int getGateNo() {
+        return gateNo;
     }
 
     //Setters

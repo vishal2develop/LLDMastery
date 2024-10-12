@@ -34,21 +34,26 @@ public abstract class ParkingSpotManager {
     }
 
     // Method to park a vehicle in the first available spot
-    public Ticket parkVehicle(Vehicle vehicle) {
+    public void parkVehicle(Vehicle vehicle) {
         ParkingSpot availableSpot = findSpace();
         if (availableSpot != null) {
             availableSpot.parkVehicle(vehicle);
-            return new Ticket(vehicle,availableSpot);
+            System.out.println("Vehicle " + vehicle.getLicensePlate() + " parked in spot ID: " + availableSpot.getId());
         }
-        System.out.println("No available parking spots for " + vehicle.getLicensePlate());
-        return null;
+        else{
+            System.out.println("No available parking spots for " + vehicle.getLicensePlate());
+        }
     }
 
-    // Method to unpark a vehicle
-    public void unParkVehicle(Ticket ticket) {
+    // Method to unpark the vehicle using the ticket
+    public void unparkVehicle(Ticket ticket) {
         ParkingSpot spot = ticket.getParkingSpot();
-        spot.unparkVehicle();
-        System.out.println("Vehicle with Ticket ID " + ticket.getTicketID() + " has been unparked.");
+        if (spot != null && !spot.isEmpty()) {
+            spot.unparkVehicle();
+            System.out.println("Vehicle with license plate " + ticket.getVehicle().getLicensePlate() + " has been unparked from Spot ID: " + spot.getId());
+        } else {
+            System.out.println("Spot is already empty or invalid for vehicle: " + ticket.getVehicle().getLicensePlate());
+        }
     }
 
     // Abstract method for pricing logic to be defined by the subclass

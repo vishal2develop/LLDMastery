@@ -28,18 +28,33 @@ public class EntranceGate {
     }
 
     // Method to book a spot using the vehicle object
-    public void bookSpot(Vehicle vehicle) {
+    public ParkingSpot bookSpot(Vehicle vehicle) {
         // Get the appropriate ParkingSpotManager
         ParkingSpotManager parkingSpotManager = ParkingSpotFactory.getParkingSpotManager(vehicle.getVehicleType(), parkingSpots);
 
         // Book the parking spot by parking the vehicle
-        parkingSpotManager.parkVehicle(vehicle);
+        ParkingSpot parkingSpot = parkingSpotManager.findSpace();
+        if (parkingSpot != null) {
+            parkingSpotManager.parkVehicle(vehicle);
+            System.out.println("Parking spot booked for vehicle: " + vehicle.getLicensePlate() + " at Gate: " + gateNo);
+        } else {
+            System.out.println("No parking spot available for vehicle: " + vehicle.getLicensePlate());
+        }
+        return parkingSpot;
+
     }
 
-    // Method to generate a parking ticket
+    // Generate a ticket after the parking spot is booked
     public Ticket generateTicket(Vehicle vehicle, ParkingSpot parkingSpot) {
         // Generate a ticket using the ParkingSpotManager
-        return new Ticket(vehicle, parkingSpot);
+        if (parkingSpot != null) {
+            Ticket ticket = new Ticket(vehicle, parkingSpot,gateNo);
+            System.out.println("Ticket generated for vehicle: " + vehicle.getLicensePlate() + " at Gate: " + gateNo);
+            return ticket;
+        }
+        System.out.println("Unable to generate ticket as no spot is booked.");
+        return null;
     }
+
 
 }

@@ -30,17 +30,19 @@ public class VehicleTicketMain {
         Vehicle bike = new TwoWheeler("Bike123");
         Vehicle car = new FourWheeler("Car456");
 
-        // Find a space for the bike and park it
-        ParkingSpot bikeSpot = entranceGate.findSpace(VehicleType.TWO_WHEELER);
-        entranceGate.bookSpot(bike);
+        // Find and book a parking spot for the bike, then generate a ticket
+        ParkingSpot bikeSpot = entranceGate.bookSpot(bike);
         Ticket bikeTicket = entranceGate.generateTicket(bike, bikeSpot);
-        System.out.println("Ticket for Bike: " + bikeTicket.getTicketID());
+        if (bikeTicket != null) {
+            System.out.println("Ticket ID: " + bikeTicket.getTicketID() + ", Vehicle: " + bikeTicket.getVehicle().getLicensePlate() + ", Spot: " + bikeTicket.getParkingSpot().getId());
+        }
 
-        // Find a space for the car and park it
-        ParkingSpot carSpot = entranceGate.findSpace(VehicleType.FOUR_WHEELER);
-        entranceGate.bookSpot(car);
+        // Find and book a parking spot for the car, then generate a ticket
+        ParkingSpot carSpot = entranceGate.bookSpot(car);
         Ticket carTicket = entranceGate.generateTicket(car, carSpot);
-        System.out.println("Ticket for Car: " + carTicket.getTicketID());
+        if (carTicket != null) {
+            System.out.println("Ticket ID: " + carTicket.getTicketID() + ", Vehicle: " + carTicket.getVehicle().getLicensePlate() + ", Spot: " + carTicket.getParkingSpot().getId());
+        }
 
 //        // Create parking managers
 //        ParkingSpotManager twoWheelerManager = new TwoWheelerParkingSpotManager(twoWheelerSpots);
@@ -68,9 +70,9 @@ public class VehicleTicketMain {
 //        System.out.println("Entry Time: " + carTicket.getEntryTime());
 //        System.out.println("Parking Fee: $" + fourWheelerManager.calculateParkingFee());
 //
-//        // Unpark the vehicles using the tickets
+        // Unpark the vehicles using the tickets
 //        System.out.println("\nUnparking Vehicles:");
-//        twoWheelerManager.unParkVehicle(bikeTicket);  // Use the ticket to unpark
+//        bikeTicket.(bikeTicket);  // Use the ticket to unpark
 //        fourWheelerManager.unParkVehicle(carTicket);  // Use the ticket to unpark
 
     }
