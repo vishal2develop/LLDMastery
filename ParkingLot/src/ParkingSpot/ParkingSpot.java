@@ -38,9 +38,6 @@ public abstract class ParkingSpot {
         }
     }
 
-    public void genrateTicket(){
-
-    }
 
     // Abstract method for calculating price
     public abstract double calculatePrice();

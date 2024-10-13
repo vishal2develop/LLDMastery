@@ -33,7 +33,7 @@ public class VehicleTicketMain {
         TicketService ticketService = new TicketService();
         PaymentService paymentService = new PaymentService();
 
-        // Create an entrance gate
+        // Create entrance & exit gate
         EntranceGate entranceGate = new EntranceGate(1, parkingService,ticketService);
         ExitGate exitGate = new ExitGate(1, parkingService,ticketService,paymentService);
 

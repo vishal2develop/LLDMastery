@@ -27,13 +27,14 @@ public class ExitGate {
         // 1. Free Parking Spot
         parkingService.unparkVehicle(ticket);  // Unpark the vehicle using the ticket
         // 2. Calculate Price
+        double parkingSpotPrice = ticket.getParkingSpot().getPrice();
         if (ticket.getVehicle().getVehicleType() == VehicleType.TWO_WHEELER){
             HourlyPricingStrategy hourlyPricingStrategy = new HourlyPricingStrategy();
-            parkingCost = hourlyPricingStrategy.calculateCost(ticket.getEntryTime());
+            parkingCost = hourlyPricingStrategy.calculateCost(ticket.getEntryTime(),parkingSpotPrice);
         }
         else if (ticket.getVehicle().getVehicleType() == VehicleType.FOUR_WHEELER){
             MinutePricingStrategy minutePricingStrategy = new MinutePricingStrategy();
-            parkingCost = minutePricingStrategy.calculateCost(ticket.getEntryTime());
+            parkingCost = minutePricingStrategy.calculateCost(ticket.getEntryTime(),parkingSpotPrice);
         }
         else {
             throw new IllegalArgumentException("Invalid vehicle type");
