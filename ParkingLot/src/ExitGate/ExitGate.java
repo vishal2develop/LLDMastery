@@ -38,7 +38,8 @@ public class ExitGate {
         else {
             throw new IllegalArgumentException("Invalid vehicle type");
         }
-        // 3. Collect Payment
+        // 3
+        // . Collect Payment
         paymentService.processPayment(paymentType,parkingCost);
 
     }
