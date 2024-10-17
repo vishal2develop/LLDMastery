@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -12,8 +13,8 @@ public class Logger {
 
     private boolean logToFile = false;  // Flag to toggle between console and file logging
     private String logFilePath;  // Path to the log file
-    private long maxFileSize = 1024 * 1024;  // Maximum file size (1MB default)
-    private int logFileIndex = 1;  // To track rotated log files
+    private LocalDate currentLogDate;  // Tracks the current date for daily log rotation
+
 
     private Logger() {
         System.out.println("Creating Logger instance");
@@ -29,11 +30,11 @@ public class Logger {
     }
 
     // Configure logging to file
-    public void enableFileLogging(String filePath,long maxFileSize) {
+    public void enableFileLogging(String fileDirectory) {
         this.logToFile = true;
-        this.logFilePath = filePath;
-        this.maxFileSize = maxFileSize;
-        System.out.println("Logging to file enabled: " + filePath);
+        this.currentLogDate = LocalDate.now();  // Initialize the log date
+        this.logFilePath = generateLogFileName(fileDirectory, currentLogDate);  // Set the log file for today
+        System.out.println("Logging to file enabled: " + logFilePath);
     }
 
     public void log(String message,String className) {
@@ -60,27 +61,19 @@ public class Logger {
         }
     }
 
-    // Method to handle log rotation based on file size
+    // Method to handle log rotation based on date
     private void rotateLogFileIfNeeded() {
-        File logFile = new File(logFilePath);
-
-        // Check if file size exceeds the limit
-        if (logFile.exists() && logFile.length() >= maxFileSize) {
-            // Rename the current log file with an index (e.g., logs_1.txt, logs_2.txt)
-            File rotatedFile = new File("logs_" + logFileIndex++ + ".txt");
-            if (logFile.renameTo(rotatedFile)) {
-                System.out.println("Log file rotated: " + rotatedFile.getName());
-            } else {
-                System.err.println("Failed to rotate log file.");
-            }
-
-            // Create a new log file (overwrite the old one)
-            try {
-                new FileWriter(logFilePath, false).close();  // Create an empty file
-            } catch (IOException e) {
-                System.err.println("Error creating new log file: " + e.getMessage());
-            }
+        LocalDate today = LocalDate.now();
+        if (!today.equals(currentLogDate)) {  // If the date has changed, rotate the log
+            System.out.println("Date has changed. Rotating log file.");
+            currentLogDate = today;
+            logFilePath = generateLogFileName("logs", currentLogDate);  // Create a new log file for the new day
         }
+    }
+
+    // Generate a new log file name based on the current date
+    private String generateLogFileName(String directory, LocalDate date) {
+        return directory + File.separator + "logs_" + date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + ".txt";
     }
 
     // Get the number of log messages

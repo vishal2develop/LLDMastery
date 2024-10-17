@@ -2,6 +2,8 @@ package LoggerExercise;
 
 public class Main {
     public static void main(String[] args) {
+        Logger logger = Logger.getInstance();
+        logger.enableFileLogging("logs");  // Set the directory for log files
         // Simulating different components logging messages
         UserService userService = new UserService();
         PaymentService paymentService = new PaymentService();
@@ -12,8 +14,7 @@ public class Main {
         paymentService.processPayment();
         orderService.processOrder();
 
-        // Verify that the same logger instance is used and check the log count
-        Logger logger = Logger.getInstance();
+
         System.out.println("Total log messages: " + logger.getLogCount());  // Should match the number of logged messages
 
 
@@ -30,12 +31,23 @@ class UserService {
 class PaymentService {
     public void processPayment() {
         Logger logger = Logger.getInstance();
-        // Enable file logging with a small file size limit for testing (e.g., 100 bytes)
-        logger.enableFileLogging("payment_logs.txt",100);
         // Log multiple messages to trigger log rotation
         for (int i = 1; i <= 10; i++) {
             logger.log("Log message number " + i,PaymentService.class.toString());
         }
+
+        // Simulate date change (this can be automated or changed manually during real runs)
+        try {
+            // Simulate a wait to change date manually or through time manipulation
+            Thread.sleep(5000);  // Wait for 5 seconds to simulate a passage of time
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // Continue logging (would be a new day in reality)
+        logger.log("This message should go into a new log file.",PaymentService.class.toString());
+        logger.log("Another message for the new day.",PaymentService.class.toString());
+
     }
 }
 
