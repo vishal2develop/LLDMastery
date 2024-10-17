@@ -9,6 +9,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class Logger {
+
+    private volatile static Logger instance;
+
     private int logCount=0;
 
     private boolean logToFile = false;  // Flag to toggle between console and file logging
@@ -20,13 +23,26 @@ public class Logger {
         System.out.println("Creating Logger instance");
     }
 
-    // Bill Pugh Singleton
-    private static class LoggerHelper{
-        private static final Logger instance = new Logger();
-    }
 
+
+
+
+    // Bill Pugh Singleton for thread safety
+//    private static class LoggerHelper{
+//        private static final Logger instance = new Logger();
+//    }
+
+    // Double-Checked Logging for thread safety
     public static Logger getInstance() {
-       return LoggerHelper.instance;
+       if (instance == null) {
+           synchronized (Logger.class) {
+               if (instance == null) {
+                   instance = new Logger();
+               }
+           }
+       }
+        return instance;
+
     }
 
     // Configure logging to file
