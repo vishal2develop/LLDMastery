@@ -7,6 +7,7 @@
       <module fileurl="file://$PROJECT_DIR$/ElevatorLLD/ElevatorLLD.iml" filepath="$PROJECT_DIR$/ElevatorLLD/ElevatorLLD.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/InterviewProblems.iml" filepath="$PROJECT_DIR$/.idea/InterviewProblems.iml" />
       <module fileurl="file://$PROJECT_DIR$/ParkingLot/ParkingLot.iml" filepath="$PROJECT_DIR$/ParkingLot/ParkingLot.iml" />
+      <module fileurl="file://$PROJECT_DIR$/SnakeAndLadder/SnakeAndLadder.iml" filepath="$PROJECT_DIR$/SnakeAndLadder/SnakeAndLadder.iml" />
       <module fileurl="file://$PROJECT_DIR$/TicTacToe/TicTacToe.iml" filepath="$PROJECT_DIR$/TicTacToe/TicTacToe.iml" />
     </modules>
   </component>
