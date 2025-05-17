@@ -1,5 +1,7 @@
 public class ATM {
-    private static ATM atmObject = new ATM(); //Singleton: eager initialization
+    // Singleton: eager initialization
+    // Instance is created at class loading time before any thread accesses it
+    private static ATM atmObject = new ATM();
 
     ATMState currentATMState;
     private int atmBalance;

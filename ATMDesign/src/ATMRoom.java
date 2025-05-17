@@ -19,7 +19,7 @@ public class ATMRoom {
     }
 
     private void initialize(){
-        // create ATM
+        // create ATM - returns atm in the idle state
         atm = ATM.getATMObject();
         // atm has 3500 in it
         atm.setAtmBalance(3500,1,2,5);
