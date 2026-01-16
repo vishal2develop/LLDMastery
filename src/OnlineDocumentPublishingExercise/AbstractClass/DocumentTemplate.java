@@ -2,7 +2,7 @@ package OnlineDocumentPublishingExercise.AbstractClass;
 
 public abstract class DocumentTemplate {
     // Template method defining the sequence of steps
-    public void publishDocument(){
+    public final void publishDocument(){
         writeContent();
         editContent();
         publishContent();
