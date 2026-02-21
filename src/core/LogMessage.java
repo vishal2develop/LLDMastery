@@ -23,9 +23,11 @@ public class LogMessage {
     public LogLevel getLevel() {
         return level;
     }
+
     public String getMessage() {
         return message;
     }
+
     public String getSource() {
         return source;
     }
@@ -62,11 +64,11 @@ public class LogMessage {
         }
 
         public LogMessage build() {
-            if(level == null){
+            if (level == null) {
                 throw new IllegalStateException("Log level is required");
             }
 
-            if(message == null || message.trim().isEmpty()){
+            if (message == null || message.trim().isEmpty()) {
                 throw new IllegalStateException("Log message is required");
             }
 
