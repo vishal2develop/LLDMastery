@@ -1,39 +1,133 @@
+Here’s the **final clean README with follow-up included** 👇
 
-## Core Use Case Flow
-The system should:
-1. Get user’s available payment instruments
-2. Identify cart LOB
-3. Pick recommendation strategy for that LOB
-4. Apply eligibility rules
-5. Remove invalid instruments
-6. Sort valid instruments by relevanceScore
-7. Return recommended payment instruments
+---
 
-| Class       | Responsibility              |
-| ----------- | --------------------------- |
-| User        | What user HAS               |
-| UserContext | What user CAN USE right now |
+# 🧠 Payment Recommendation System (LLD)
 
-## Design Choices
-- Since recommendation logic varies by line of business, Use the **Strategy pattern** to encapsulate different `recommendation algorithms` and keep the service layer clean.
+## 🎯 Requirement
 
-- **Clean Flow:**
-    ```aiignore
-    Client wires dependencies
-            ↓
-    Factory stores LOB → Strategy mapping
-            ↓
-    Service receives request
-            ↓
-    Service asks Factory for Strategy
-            ↓
-    Strategy applies its Rules
-            ↓
-    Rules decide eligibility
-            ↓
-    Strategy sorts by relevanceScore
-            ↓
-    Service returns recommendations
-    ```
-- Avoid creating rules inside the strategy and instead inject them through the constructor to keep the design flexible and testable.
-    - Strategy should not create rules — it should receive them from the client.
+Design a system to recommend payment instruments during checkout based on:
+
+* Transaction type (**Line of Business - LOB**)
+* Transaction limits and regulations
+* User’s available payment instruments
+* Runtime context (e.g., UPI enabled)
+* Relevance score (ranking)
+
+### Supported LOBs
+
+* **COMMERCE** → regular purchases (e.g., headphones, mobile)
+* **INVESTMENT** → financial products (e.g., mutual funds, insurance)
+* **CREDIT_CARD_BILL_PAYMENT** → paying credit card bills
+
+### Key Constraint Example
+
+* Credit card **cannot** be used for credit card bill payment
+
+---
+
+## 🔄 Core Flow
+
+Given `User + Cart + UserContext`, the system:
+
+1. Fetches user’s payment instruments
+2. Identifies cart LOB
+3. Selects recommendation strategy
+4. Applies eligibility rules
+5. Filters invalid instruments
+6. Sorts by relevance score
+7. Returns recommended instruments
+
+---
+
+## 🧩 Key Concepts
+
+| Class       | Responsibility                    |
+| ----------- | --------------------------------- |
+| User        | What user **has**                 |
+| UserContext | What user **can use right now**   |
+| Cart        | Aggregates items and derives LOB  |
+| Strategy    | LOB-specific recommendation logic |
+| Rule        | Individual eligibility checks     |
+
+---
+
+## 🏗️ Design
+
+### Strategy Pattern
+
+* Encapsulates LOB-specific recommendation logic
+* Keeps service layer clean and extensible
+
+### Rule (Specification) Pattern
+
+* Each rule validates one condition
+* Strategies compose rules for filtering
+
+---
+
+## ⚙️ Execution Flow
+
+```text
+Client → Factory → Service → Strategy → Rules → Result
+```
+
+---
+
+## 🔧 Wiring Principle
+
+* Client wires:
+
+    * Strategies
+    * Rules
+    * Factory mappings
+
+* Strategy:
+
+    * Receives rules via constructor
+    * Does not create dependencies
+
+---
+
+## 🔁 Follow-up (Advanced Requirement)
+
+### Problem
+
+Cart may contain items from **multiple LOBs** (e.g., commerce + investment).
+
+### Approach
+
+* Split cart into logical units:
+
+```text
+Cart → List<OrderSplit>
+OrderSplit → single LOB
+```
+
+* Apply recommendation logic **per split**
+* Return recommendations per split or aggregated view
+
+---
+
+## 🧠 Key Design Decisions
+
+* **Separation of concerns**
+
+    * Service → orchestration
+    * Strategy → flow
+    * Rule → validation
+
+* **Extensibility**
+
+    * Add new LOB → new strategy
+    * Add new rule → plug into strategy
+
+* **Config-driven**
+
+    * Transaction limits and constraints are externalized
+
+---
+
+## 🧠 One-Line Summary
+
+> **Strategy selects logic, Rules filter eligibility, Service orchestrates.**
