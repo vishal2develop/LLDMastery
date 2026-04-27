@@ -2,7 +2,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class Cart {
+public class Cart implements PayableContext {
     private String id;
     private List<CartItem> cartItems;
 
@@ -11,9 +11,11 @@ public class Cart {
         this.cartItems = cartItems;
     }
 
-    public double getTotalAmount(){
+    @Override
+    public double getTotalAmount() {
         return 0.0;
     }
+
     public int getTotalQuantity(){
         return 0;
     }
@@ -25,9 +27,12 @@ public class Cart {
                 .collect(Collectors.toSet());
     }
 
-    public LineOfBusiness getLineOfBusiness(){
-        Set<LineOfBusiness> lineOfBusinesses = getLineOfBusinesses();
 
+
+
+    @Override
+    public LineOfBusiness getLineOfBusiness() {
+        Set<LineOfBusiness> lineOfBusinesses = getLineOfBusinesses();
         if(lineOfBusinesses.size()!=1){
             throw new IllegalStateException("Cart must contain only one line of business");
         }
@@ -37,4 +42,6 @@ public class Cart {
     public List<CartItem> getCartItems() {
         return cartItems;
     }
+
+
 }

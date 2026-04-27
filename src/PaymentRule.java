@@ -2,7 +2,7 @@ public interface PaymentRule {
 
     boolean isApplicable(
             PaymentInstrument instrument,
-            Cart cart,
+            PayableContext payableContext,
             User user,
             UserContext context
     );

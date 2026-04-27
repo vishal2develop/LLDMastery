@@ -29,6 +29,9 @@ public class Client {
         CartItem billItem = new CartItem("CI2", creditCardBill, 1);
         Cart billPaymentCart = new Cart("C2", List.of(billItem));
 
+        // Mixed cart testing - multiple line of business
+        Cart mixedCart = new Cart("C3", List.of(item1, billItem));
+
 
         // Payment instruments
         PaymentInstrument upi = new PaymentInstrument(
@@ -52,10 +55,17 @@ public class Client {
                 70
         );
 
+        PaymentInstrument debitCard = new PaymentInstrument(
+                "PI4",
+                PaymentInstrumentType.DEBIT_CARD,
+                "SBI",
+                75
+        );
+
         // User
         User user = new User(
                 "U1",
-                List.of(upi, creditCard, netBanking)
+                List.of(upi, creditCard, netBanking,debitCard)
         );
 
         // Runtime context
@@ -70,7 +80,8 @@ public class Client {
                         LineOfBusiness.COMMERCE, Map.of(
                                 PaymentInstrumentType.UPI, 100000.0,
                                 PaymentInstrumentType.DEBIT_CARD, 200000.0,
-                                PaymentInstrumentType.CREDIT_CARD, 500000.0
+                                PaymentInstrumentType.CREDIT_CARD, 500000.0,
+                                PaymentInstrumentType.NET_BANKING, 500000.0
                         ),
                         LineOfBusiness.INVESTMENT, Map.of(
                                 PaymentInstrumentType.UPI, 200000.0,
@@ -83,14 +94,22 @@ public class Client {
         // Define the rules
         RecommendationStrategyFactory strategyFactory = getRecommendationStrategyFactory(limitConfig);
 
+        CartSplitter cartSplitter = new CartSplitter();
+
         // Create the Payment Recommendation service
-        PaymentRecommendationService recommendationService = new PaymentRecommendationService(strategyFactory);
+        PaymentRecommendationService recommendationService = new PaymentRecommendationService(strategyFactory,cartSplitter);
 
 
         // List<PaymentInstrument> recommendedInstruments = recommendationService.recommend(user, billPaymentCart, context); // for credit card bill payment testing
-        List<PaymentInstrument> recommendedInstruments = recommendationService.recommend(user, cart, context); // for commerce testing & Investment testing
+        // List<PaymentInstrument> recommendedInstruments = recommendationService.recommend(user, cart, context); // for commerce testing & Investment testing
 
-        recommendedInstruments.forEach(System.out::println);
+        List<SplitRecommendation> splitRecommendations =
+                recommendationService.recommendForMixedCart(user, mixedCart, context);
+
+
+        // recommendedInstruments.forEach(System.out::println);
+
+        splitRecommendations.forEach(System.out::println);
     }
 
     private static RecommendationStrategyFactory getRecommendationStrategyFactory(TransactionLimitConfig limitConfig) {

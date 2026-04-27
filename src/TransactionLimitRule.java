@@ -7,10 +7,10 @@ public class TransactionLimitRule implements PaymentRule{
 
 
     @Override
-    public boolean isApplicable(PaymentInstrument instrument, Cart cart, User user, UserContext context) {
+    public boolean isApplicable(PaymentInstrument instrument, PayableContext payableContext, User user, UserContext context) {
         // check if the instrument is of the same type as the line of business
-        double limit = config.getLimit(cart.getLineOfBusiness(),instrument.getType());
+        double limit = config.getLimit(payableContext.getLineOfBusiness(),instrument.getType());
         // check if the total amount of the cart is less than or equal to the limit -> transaction is allowed
-        return cart.getTotalAmount() <= limit;
+        return payableContext.getTotalAmount() <= limit;
     }
 }

@@ -1,68 +1,76 @@
-Here’s the **final clean README with follow-up included** 👇
-
----
-
 # 🧠 Payment Recommendation System (LLD)
 
 ## 🎯 Requirement
 
-Design a system to recommend payment instruments during checkout based on:
+Recommend payment instruments based on:
 
-* Transaction type (**Line of Business - LOB**)
-* Transaction limits and regulations
-* User’s available payment instruments
-* Runtime context (e.g., UPI enabled)
+* Line of Business (LOB)
+* Transaction limits / regulations
+* User’s available instruments
+* Runtime context (device capability)
 * Relevance score (ranking)
 
 ### Supported LOBs
 
-* **COMMERCE** → regular purchases (e.g., headphones, mobile)
-* **INVESTMENT** → financial products (e.g., mutual funds, insurance)
-* **CREDIT_CARD_BILL_PAYMENT** → paying credit card bills
+* **COMMERCE**
+* **INVESTMENT**
+* **CREDIT_CARD_BILL_PAYMENT**
 
-### Key Constraint Example
+### Key Constraint
 
-* Credit card **cannot** be used for credit card bill payment
+* Credit card ❌ for credit card bill payment
 
 ---
 
-## 🔄 Core Flow
+# 🚀 Phase 1: MVP (Single LOB Cart)
 
-Given `User + Cart + UserContext`, the system:
+## 🔄 End-to-End Flow
 
-1. Fetches user’s payment instruments
-2. Identifies cart LOB
-3. Selects recommendation strategy
-4. Applies eligibility rules
-5. Filters invalid instruments
-6. Sorts by relevance score
-7. Returns recommended instruments
+```text
+User + Cart + UserContext
+        ↓
+PaymentRecommendationService
+        ↓
+Factory selects Strategy (based on LOB)
+        ↓
+Strategy applies Rules
+        ↓
+Rules filter instruments
+        ↓
+Strategy sorts by relevanceScore
+        ↓
+Return recommended instruments
+```
 
 ---
 
 ## 🧩 Key Concepts
 
-| Class       | Responsibility                    |
-| ----------- | --------------------------------- |
-| User        | What user **has**                 |
-| UserContext | What user **can use right now**   |
-| Cart        | Aggregates items and derives LOB  |
-| Strategy    | LOB-specific recommendation logic |
-| Rule        | Individual eligibility checks     |
+| Component              | Responsibility                |
+| ---------------------- | ----------------------------- |
+| User                   | What user **has**             |
+| UserContext            | What user **can use now**     |
+| Cart                   | Aggregates items, derives LOB |
+| RecommendationStrategy | LOB-specific logic            |
+| PaymentRule            | Eligibility checks            |
+| StrategyFactory        | Selects strategy              |
 
 ---
 
-## 🏗️ Design
+## 🏗️ Design Patterns
 
-### Strategy Pattern
+### 🧠 Strategy Pattern
 
 * Encapsulates LOB-specific recommendation logic
-* Keeps service layer clean and extensible
 
-### Rule (Specification) Pattern
+### 🧠 Rule (Specification) Pattern
 
-* Each rule validates one condition
-* Strategies compose rules for filtering
+* Each rule checks one condition
+
+### 🧠 Factory Pattern
+
+* Maps `LOB → Strategy`
+* Decouples service from strategy creation
 
 ---
 
@@ -78,8 +86,8 @@ Client → Factory → Service → Strategy → Rules → Result
 
 * Client wires:
 
-    * Strategies
     * Rules
+    * Strategies
     * Factory mappings
 
 * Strategy:
@@ -89,45 +97,101 @@ Client → Factory → Service → Strategy → Rules → Result
 
 ---
 
-## 🔁 Follow-up (Advanced Requirement)
-
-### Problem
-
-Cart may contain items from **multiple LOBs** (e.g., commerce + investment).
-
-### Approach
-
-* Split cart into logical units:
-
-```text
-Cart → List<OrderSplit>
-OrderSplit → single LOB
-```
-
-* Apply recommendation logic **per split**
-* Return recommendations per split or aggregated view
-
----
-
 ## 🧠 Key Design Decisions
 
-* **Separation of concerns**
+* Separation of concerns
 
     * Service → orchestration
     * Strategy → flow
     * Rule → validation
 
-* **Extensibility**
+* Extensibility
 
     * Add new LOB → new strategy
     * Add new rule → plug into strategy
 
-* **Config-driven**
+* Config-driven
 
-    * Transaction limits and constraints are externalized
+    * Transaction limits externalized
 
 ---
 
-## 🧠 One-Line Summary
+# 🔁 Phase 2: Mixed LOB Cart (Follow-up)
 
-> **Strategy selects logic, Rules filter eligibility, Service orchestrates.**
+## 🎯 Problem
+
+Cart contains multiple LOBs:
+
+```text
+Cart
+ ├── COMMERCE
+ └── INVESTMENT
+```
+
+---
+
+## 🧠 Solution
+
+Split cart:
+
+```text
+Cart → List<CartSplit>
+CartSplit → single LOB
+```
+
+---
+
+## 🔄 Updated End-to-End Flow
+
+```text
+User + Cart + UserContext
+        ↓
+CartSplitter
+        ↓
+List<CartSplit>
+        ↓
+For each CartSplit:
+    Factory → Strategy → Rules → Recommendations
+        ↓
+Aggregate results
+```
+
+---
+
+## 🧩 New Components
+
+| Component           | Responsibility                        |
+| ------------------- | ------------------------------------- |
+| CartSplit           | LOB-specific subset                   |
+| CartSplitter        | Splits cart                           |
+| PayableContext      | Common abstraction (Cart / CartSplit) |
+| SplitRecommendation | Response per split                    |
+
+---
+
+## 🧠 Design Enhancement
+
+```text
+PayableContext
+ ├── Cart
+ └── CartSplit
+```
+
+Enables reuse of:
+
+* Strategy
+* Rules
+
+---
+
+## 🧠 Key Insight
+
+> Move from **cart-level → split-level processing**
+
+---
+
+# 🧠 One-Line Summary
+
+> **Strategy selects logic, Rules filter eligibility, Factory decouples creation, Service orchestrates.**
+
+---

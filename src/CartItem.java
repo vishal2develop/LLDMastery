@@ -10,7 +10,7 @@ public class CartItem {
     }
 
     public double getTotalPrice(){
-        return 0.0;
+        return product.getPrice() * quantity;
     }
 
     public int getQuantity() {
