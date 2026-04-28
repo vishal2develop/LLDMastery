@@ -133,7 +133,33 @@ Worker picks request (FIFO)
 OrderService.placeOrder()
         ↓
 Inventory.reserve()
+
 ```
+---
+
+## 📦 Understanding BlockingQueue
+
+**What is `BlockingQueue`?**
+
+* A **thread-safe queue** from `java.util.concurrent`
+* Designed for **producer/consumer** scenarios
+* **Blocks (waits)** when:
+    * Queue is empty → `take()` waits until item is available
+    * Queue is full → `put()` waits until space is available
+
+**What is `LinkedBlockingQueue`?**
+
+* A common implementation of `BlockingQueue`
+* Uses **linked nodes** internally
+* Can be **unbounded** (default) or **bounded** (with capacity limit)
+* Perfect for our fairness queue: workers wait when no requests are available
+
+**Why use it here?**
+
+* Workers don't need to repeatedly check if requests are available
+* Workers automatically **wait** when queue is empty
+* Workers automatically **wake up** when new requests arrive
+
 
 ---
 

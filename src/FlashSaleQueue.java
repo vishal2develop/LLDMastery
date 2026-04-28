@@ -2,7 +2,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class FlashSaleQueue {
-    // Queue to store flash sale requests
+    // Thread safe queue to store PurchaseRequests
     private BlockingQueue<PurchaseRequest> queue = new LinkedBlockingQueue<>();
 
     // Methods to add and remove items from the queue
