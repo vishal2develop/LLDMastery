@@ -1,4 +1,3 @@
-
 # 🧠 Flash Sale System – MVP
 
 A simple flash sale system that handles high concurrency while ensuring no overselling.
@@ -8,7 +7,7 @@ A simple flash sale system that handles high concurrency while ensuring no overs
 ## 🎯 Assumptions
 
 * Single flash sale event
-* Multiple products supported
+* Multiple products supported (one product per order)
 * In-memory storage
 * No payment flow
 * One user can buy only one unit per product
@@ -93,7 +92,105 @@ No global lock → better performance
 
 ---
 
+# 🔁 Phase 2: Fairness Queue
+
+## 🎯 Problem
+
+In MVP, requests compete using threads:
+
+```text
+Fast thread wins ❌
+Slow thread loses ❌
+```
+
+This is not fair.
+
+---
+
+## 🧠 Solution
+
+Introduce a **Fairness Queue (FIFO)**
+
+```text
+User requests → Queue → Worker → OrderService
+```
+
+Requests are processed in the order they arrive.
+
+---
+
+## ⚙️ Updated Flow
+
+```text
+User clicks Buy
+        ↓
+Create PurchaseRequest
+        ↓
+Add to Queue
+        ↓
+Worker picks request (FIFO)
+        ↓
+OrderService.placeOrder()
+        ↓
+Inventory.reserve()
+```
+
+---
+
+## 🧠 Key Points
+
+* Ensures **first come → first served**
+* Removes dependency on thread scheduling
+* Improves fairness and predictability
+* Still uses `Inventory.reserve()` for correctness
+
+---
+
 ## 🧠 One-Line Summary
 
-> **Inventory ensures correctness, OrderService orchestrates flow, ConcurrentHashMap prevents duplicate purchases.**
+> **Queue ensures fairness, Inventory ensures correctness**
+
+---
+
+# 📊 Architecture Diagram
+
+```mermaid
+flowchart TD
+    User --> Queue[FlashSaleQueue]
+    Queue --> Worker[OrderWorker]
+    Worker --> OrderService
+    OrderService --> Inventory
+    OrderService --> OrderRepository
+```
+
+---
+
+# 🔄 Sequence Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant Q as Queue
+    participant W as Worker
+    participant OS as OrderService
+    participant I as Inventory
+
+    U->>Q: Submit PurchaseRequest
+    Q->>W: Provide next request
+    W->>OS: placeOrder(user, product)
+    OS->>I: reserve()
+    alt Stock Available
+        I-->>OS: success
+        OS-->>W: Order CREATED
+    else Sold Out
+        I-->>OS: failure
+        OS-->>W: Order FAILED
+    end
+```
+
+---
+
+# 🧠 One-Line Summary
+
+> **Inventory ensures correctness, Queue ensures fairness, OrderService orchestrates flow.**
 
