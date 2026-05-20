@@ -30,7 +30,6 @@ public class ReservationService {
                 generateReservationId(),
                 user,
                 vehicle,
-                ReservationStatus.CONFIRMED,
                 startTime,
                 endTime
         );
@@ -42,40 +41,18 @@ public class ReservationService {
     }
 
     public void pickupVehicle(Reservation reservation) {
-        // A vehicle can only be picked up if it is reserved and confirmed
-        if(reservation.getStatus() != ReservationStatus.CONFIRMED){
-            throw new IllegalStateException("Reservation is not confirmed");
-        }
-
-        reservation.setStatus(ReservationStatus.ACTIVE);
-        reservation.getVehicle().setStatus(VehicleStatus.RENTED);
-        System.out.println("Vehicle Rented");
+        reservation.pickUpVehicle();
     }
 
     public void returnVehicle(Reservation reservation) {
-        if(reservation.getStatus() != ReservationStatus.ACTIVE){
-            throw new IllegalStateException("Vehicle is not currently rented");
-        }
-        reservation.setStatus(ReservationStatus.COMPLETED);
-        reservation.getVehicle().setStatus(VehicleStatus.AVAILABLE);
-        System.out.println("Vehicle Returned");
+        reservation.returnVehicle();
     }
 
     public void cancelReservation(Reservation reservation) {
-        if(reservation.getStatus() == ReservationStatus.COMPLETED || reservation.getStatus() == ReservationStatus.ACTIVE){
-            throw new IllegalStateException("Cannot cancel a completed/active reservation");
-        }
-        reservation.setStatus(ReservationStatus.CANCELLED);
-        reservation.getVehicle().setStatus(VehicleStatus.AVAILABLE);
-        System.out.println("Reservation Cancelled");
+        reservation.cancelReservation();
     }
 
     private String generateReservationId() {
         return String.valueOf(System.nanoTime());
     }
-
-
-
-
-
 }

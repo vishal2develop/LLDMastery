@@ -16,7 +16,6 @@ public class Payment {
     public String toString() {
         return "Payment{" +
                 "paymentId='" + paymentId + '\'' +
-                ", reservationId='" + reservation.getReservationId() + '\'' +
                 ", amount=" + amount +
                 ", status=" + paymentStatus +
                 '}';
