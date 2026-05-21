@@ -11,6 +11,14 @@ public class Vehicle {
         this.status = status;
     }
 
+    public synchronized boolean reserveVehicle() {
+        if (status != VehicleStatus.AVAILABLE) {
+            return false;
+        }
+        status = VehicleStatus.RESERVED;
+        return true;
+    }
+
     public String getVehicleId() {
         return vehicleId;
     }

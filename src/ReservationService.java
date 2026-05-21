@@ -23,7 +23,9 @@ public class ReservationService {
 
     public Reservation reserveVehicle(User user, Vehicle vehicle, LocalDateTime startTime, LocalDateTime endTime) {
         // Step1: Mark vehicle reserved
-        vehicle.setStatus(VehicleStatus.RESERVED);
+        if(!vehicle.reserveVehicle()) {
+            throw new IllegalStateException("Vehicle is not available");
+        }
 
         // Step2: Create Reservation
         Reservation reservation = new Reservation(

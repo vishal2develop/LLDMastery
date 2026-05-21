@@ -50,4 +50,8 @@ public class Reservation {
     public LocalDateTime getEndTime() {
         return endTime;
     }
+
+    public String getReservationId() {
+        return reservationId;
+    }
 }
