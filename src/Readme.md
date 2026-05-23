@@ -67,3 +67,49 @@ Validate Balance
 Dispense Notes
       ↓
 Eject Card
+```
+
+## State Pattern
+
+ATM behavior changes depending on the current state.
+
+| State                | Allowed Actions            |
+| -------------------- | -------------------------- |
+| `NoCardState`        | Insert card                |
+| `CardInsertedState`  | Enter PIN / Eject card     |
+| `AuthenticatedState` | Withdraw cash / Eject card |
+
+---
+## Chain of Responsibility - Cash Dispensing
+
+Cash dispensing is modeled using Chain of Responsibility.
+
+Each dispenser handles one denomination and forwards the remaining amount to the next dispenser.
+
+> Dispenser Chain - `2000 → 500 → 100`
+
+## Validation Rules
+- PIN must be valid
+- Account must have sufficient balance
+- Withdrawal amount must be a multiple of 100
+
+---
+## Architecture Overview
+```mermaid
+flowchart TD
+
+    Client --> ATM
+    ATM --> ATMState
+
+    ATMState --> Card
+    Card --> BankAccount
+
+    ATM --> CashDispenser
+    CashDispenser --> CashDispenser
+```
+## One Liner Summary
+> ATM behavior is modeled using State Pattern, while note dispensing is modeled using Chain of Responsibility.
+
+---
+
+
