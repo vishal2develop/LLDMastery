@@ -209,4 +209,46 @@ flowchart TD
 > Factory Pattern handles transaction creation, while Template Method defines the common transaction execution flow.
 
 
+---
+````md
+# Phase 3 - Account Types using Strategy Pattern
 
+## Goal
+
+Support different account types with different withdrawal rules.
+
+Supported account types:
+- Savings Account
+- Current Account
+
+---
+
+## Strategy Pattern
+
+Account-specific withdrawal behavior is delegated to `AccountTypeStrategy`.
+
+```text
+BankAccount
+    ↓
+AccountTypeStrategy
+    ├── SavingsAccountStrategy
+    └── CurrentAccountStrategy
+````
+
+This avoids account-type based `if-else` checks inside `BankAccount`.
+
+---
+
+## Design Decision
+
+| Pattern          | Responsibility                                 |
+| ---------------- | ---------------------------------------------- |
+| Strategy Pattern | Encapsulates account-specific withdrawal rules |
+
+---
+
+## One-Line Summary
+
+> Strategy Pattern allows account-specific withdrawal behavior to vary independently from `BankAccount`.
+
+---

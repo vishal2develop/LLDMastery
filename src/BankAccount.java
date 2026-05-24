@@ -2,13 +2,16 @@ public class BankAccount {
     private String accountNumber;
     private double balance;
 
-    public BankAccount(String accountNumber, double balance){
+    private AccountTypeStrategy accountTypeStrategy;
+
+    public BankAccount(String accountNumber, double balance, AccountTypeStrategy accountTypeStrategy){
         this.accountNumber = accountNumber;
         this.balance = balance;
+        this.accountTypeStrategy = accountTypeStrategy;
     }
 
     public boolean hasSufficientBalance(int amount){
-        return balance >= amount;
+       return accountTypeStrategy.hasSufficientFunds(balance, amount);
     }
 
     public void withdraw(int amount){
