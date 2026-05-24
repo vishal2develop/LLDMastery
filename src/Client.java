@@ -8,7 +8,7 @@ public class Client {
         try{
             atm.insertCard(card);
             atm.enterPin(1234);
-            atm.dispenseCash(2800);
+            atm.selectTransaction(TransactionType.WITHDRAW, 2800);
             System.out.println("Remaining balance: " + account.getBalance());
         }
         catch(Exception e){

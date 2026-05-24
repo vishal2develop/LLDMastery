@@ -11,25 +11,16 @@ public class AuthenticatedState implements ATMState{
     }
 
     @Override
-    public void dispenseCash(ATM atm, int amount) {
-        // get back account
-        BankAccount bankAccount = atm.getCurrentCard().getBankAccount();
-        // check if account has sufficient balance
-        if(!bankAccount.hasSufficientBalance(amount)){
-            throw new IllegalStateException("Insufficient balance");
-        }
+    public void selectTransaction(ATM atm, TransactionType transactionType, int amount) {
+        ATMTransaction transaction = TransactionFactory.createTransaction(transactionType, amount);
+        transaction.process(atm);
 
-        // withdraw money from account
-        bankAccount.withdraw(amount);
-        // dispense cash
-        atm.getCashDispenser().dispenseCash(amount);
-
-        // eject card
+        // Post transaction processing -> eject card workflow
         atm.setCurrentCard(null);
         atm.setCurrentState(new NoCardState());
         System.out.println("Card ejected");
-
     }
+
 
     @Override
     public void ejectCard(ATM atm) {

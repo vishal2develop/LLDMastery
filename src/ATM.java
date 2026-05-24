@@ -25,12 +25,14 @@ public class ATM {
     public void enterPin(int pin){
         currentState.enterPin(this, pin);
     }
-    public void dispenseCash(int amount){
-        if(amount%100!=0){
+
+    public void selectTransaction(TransactionType transactionType, int amount){
+        if(transactionType == TransactionType.WITHDRAW && amount %100!=0){
             throw new IllegalArgumentException("Amount must be a multiple of 100");
         }
-        currentState.dispenseCash(this, amount);
+        currentState.selectTransaction(this, transactionType, amount);
     }
+
     public void ejectCard(){
         currentState.ejectCard(this);
     }

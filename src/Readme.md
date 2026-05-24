@@ -113,3 +113,100 @@ flowchart TD
 ---
 
 
+# Phase 2 - Transaction Support
+
+## Goal
+
+Extend the ATM to support multiple transaction types.
+
+Supported transactions:
+- Withdraw Cash
+- Balance Inquiry
+
+---
+
+## Transaction Flow
+
+```text
+Authenticate User
+      ↓
+Select Transaction
+      ↓
+Create Transaction
+      ↓
+Validate
+      ↓
+Execute
+      ↓
+Print Receipt
+      ↓
+Eject Card
+````
+
+---
+
+## Factory Pattern
+
+Transaction creation is handled using `TransactionFactory`.
+
+```text
+TransactionType → ATMTransaction
+```
+
+This avoids transaction creation logic inside ATM states.
+
+Examples:
+
+* `WithdrawCashTransaction`
+* `BalanceInquiryTransaction`
+
+---
+
+## Template Method Pattern
+
+All transactions follow a common workflow:
+
+```text
+validate → execute → printReceipt
+```
+
+This flow is defined inside the abstract `ATMTransaction`.
+
+Concrete transactions implement:
+
+* `validate()`
+* `execute()`
+
+---
+
+## Design Decision
+
+| Pattern                 | Responsibility                      |
+| ----------------------- | ----------------------------------- |
+| Factory Pattern         | Creates correct transaction object  |
+| Template Method Pattern | Defines common transaction workflow |
+
+---
+
+## Updated Architecture
+
+```mermaid
+flowchart TD
+
+    ATM --> ATMState
+    ATMState --> TransactionFactory
+
+    TransactionFactory --> ATMTransaction
+
+    ATMTransaction --> WithdrawCashTransaction
+    ATMTransaction --> BalanceInquiryTransaction
+```
+
+---
+
+## One-Line Summary
+
+> Factory Pattern handles transaction creation, while Template Method defines the common transaction execution flow.
+
+
+

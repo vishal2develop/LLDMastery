@@ -17,7 +17,7 @@ public class CardInsertedState implements ATMState{
     }
 
     @Override
-    public void dispenseCash(ATM atm, int amount) {
+    public void selectTransaction(ATM atm, TransactionType transactionType, int amount) {
         throw new IllegalStateException("Please enter PIN first");
     }
 

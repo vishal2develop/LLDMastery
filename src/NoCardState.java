@@ -9,10 +9,13 @@ public class NoCardState implements ATMState{
     public void enterPin(ATM atm, int pin) {
         throw new IllegalStateException("Please insert card first");
     }
+
+
     @Override
-    public void dispenseCash(ATM atm, int amount) {
+    public void selectTransaction(ATM atm, TransactionType transactionType, int amount) {
         throw new IllegalStateException("Please insert card first");
     }
+
     @Override
     public void ejectCard(ATM atm) {
         throw new IllegalStateException("No card inserted");
