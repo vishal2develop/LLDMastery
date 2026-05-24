@@ -14,7 +14,7 @@ public class BankAccount {
        return accountTypeStrategy.hasSufficientFunds(balance, amount);
     }
 
-    public void withdraw(int amount){
+    public synchronized void withdraw(int amount){
         // Critical section:
         // check + update should happen atomically
         if(!accountTypeStrategy.hasSufficientFunds(balance, amount)){

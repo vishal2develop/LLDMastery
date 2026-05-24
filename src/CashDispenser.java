@@ -5,5 +5,9 @@ public abstract class CashDispenser {
         this.nextCashDispenser = cashDispenser;
     }
 
-    public abstract void dispenseCash(int amount);
+    public synchronized void dispenseCash(int amount){
+        dispense(amount);
+    }
+
+    protected abstract void dispense(int amount);
 }

@@ -252,3 +252,65 @@ This avoids account-type based `if-else` checks inside `BankAccount`.
 > Strategy Pattern allows account-specific withdrawal behavior to vary independently from `BankAccount`.
 
 ---
+
+# Phase 4 - Concurrency
+
+## Goal
+
+Prevent race conditions during concurrent withdrawals.
+
+Shared resources:
+- `BankAccount.balance`
+- `CashDispenser`
+
+---
+
+## Synchronization
+
+Critical balance updates are synchronized inside `BankAccount.withdraw()`.
+
+```text
+check balance
+    ↓
+deduct balance
+````
+
+This ensures balance validation and deduction happen atomically.
+
+---
+
+## Cash Dispenser Concurrency
+
+Cash dispensing is synchronized to prevent multiple threads from dispensing cash simultaneously.
+
+```text
+validate
+    ↓
+dispense notes
+```
+
+---
+
+## Design Decision
+
+| Shared Resource | Protection     |
+| --------------- | -------------- |
+| Account balance | `synchronized` |
+| Cash dispenser  | `synchronized` |
+
+---
+
+## Better Alternatives
+
+| Option           | Use Case                            |
+| ---------------- | ----------------------------------- |
+| `ReentrantLock`  | Timeout / fairness / tryLock        |
+| `Semaphore`      | Limited concurrent dispenser access |
+| `@Transactional` | DB-backed balance consistency       |
+
+---
+
+## One-Line Summary
+
+> Synchronization ensures ATM balance updates and cash dispensing remain atomic under concurrent withdrawals.
+

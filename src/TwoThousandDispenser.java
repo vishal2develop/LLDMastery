@@ -1,6 +1,7 @@
 public class TwoThousandDispenser extends CashDispenser{
+
     @Override
-    public void dispenseCash(int amount) {
+    protected void dispense(int amount) {
         int notes = (int) (amount / 2000);
         int remainingAmount = (int) (amount % 2000);
         if(notes > 0){
