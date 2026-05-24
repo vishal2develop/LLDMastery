@@ -17,7 +17,7 @@ public class Client {
             System.out.println("Savings account Testing");
             atm.insertCard(savingsAccountCard);
             atm.enterPin(1234);
-            atm.selectTransaction(TransactionType.WITHDRAW, 1000);
+            atm.selectTransaction(TransactionType.WITHDRAW, 2800);
             System.out.println("Remaining balance: " + savingsAccount.getBalance());
         }
         catch(Exception e){

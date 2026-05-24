@@ -10,9 +10,8 @@ public class WithdrawCashTransaction extends ATMTransaction{
 
     @Override
     public void validate(ATM atm) {
-        BankAccount bankAccount = atm.getCurrentCard().getBankAccount();
-        if(!bankAccount.hasSufficientBalance(amount)){
-            throw new IllegalStateException("Insufficient balance");
+        if(amount <= 0){
+            throw new IllegalArgumentException("Invalid withdrawal amount: "+amount);
         }
     }
 

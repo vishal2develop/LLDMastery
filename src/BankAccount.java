@@ -15,6 +15,11 @@ public class BankAccount {
     }
 
     public void withdraw(int amount){
+        // Critical section:
+        // check + update should happen atomically
+        if(!accountTypeStrategy.hasSufficientFunds(balance, amount)){
+            throw new IllegalStateException("Insufficient balance");
+        }
         balance -= amount;
     }
 
