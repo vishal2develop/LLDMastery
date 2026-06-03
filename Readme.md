@@ -3,6 +3,7 @@
 ## Context
 
 Design a hotel management system that supports:
+
 - Search available rooms
 - Reserve room
 - Check-in guest
@@ -11,136 +12,112 @@ Design a hotel management system that supports:
 
 ---
 
+## Scope
+
+### In Scope (Phase 1)
+
+- Search rooms by type and date range
+- Reserve, cancel, check-in, check-out
+- Date-overlap availability
+
+### Out of Scope
+
+- Payment gateway, notifications, multi-property inventory, database
+
+---
+
 # Phase 1 - Core Booking Flow
 
-## Core Entities
+## Goal
+
+End-to-end booking from search through check-out.
+
+## Entities
 
 | Entity | Responsibility |
-|----------|---------------|
+|--------|----------------|
 | `Guest` | Hotel customer |
-| `Room` | Hotel room |
-| `RoomInventory` | Stores and searches rooms |
-| `Reservation` | Booking details |
-| `ReservationService` | Booking orchestration |
-| `Bill` | Final bill |
+| `Room` | Room number, type, current status |
+| `RoomInventory` | Stores rooms; searches by type and dates |
+| `Reservation` | Guest, room, dates, booking status |
+| `ReservationService` | Orchestrates booking lifecycle |
+| `Bill` | Stub only — not used in flow yet |
 
----
+## Enums
 
-## Room Types
+**RoomType:** `STANDARD`, `DELUXE`, `SUITE`
 
-```text
-STANDARD
-DELUXE
-SUITE
-````
+**RoomStatus:** `AVAILABLE` → `RESERVED` → `OCCUPIED` → `AVAILABLE`
 
----
+**BookingStatus:** `CONFIRMED` → `CHECKED_IN` → `CHECKED_OUT`  
+Branch: `CONFIRMED` → `CANCELLED`
 
-## Room Status
+## Flow
 
 ```text
-AVAILABLE
-RESERVED
-OCCUPIED
+Search Room → Reserve → Check-In → Check-Out
 ```
 
----
+## Key Design
 
-## Booking Status
+| Component | Role |
+|-----------|------|
+| `RoomInventory` | Filter by `RoomType`; skip rooms with overlapping active reservations |
+| `ReservationService` | Reserve, cancel, check-in, check-out; owns the reservation list |
 
-```text
-CONFIRMED
-CHECKED_IN
-CHECKED_OUT
-CANCELLED
-```
-
----
-
-## Core Flow
+**Availability** uses reservation **date overlap**, not room status alone. One room can hold multiple bookings across non-overlapping ranges.
 
 ```text
-Search Room
-    ↓
-Reserve Room
-    ↓
-Check-In
-    ↓
-Check-Out
+Existing Jun 3–5, request Jun 4–6 → unavailable
+Existing Jun 3–5, request Jun 6–7 → available
 ```
 
----
-
-## Design Decisions
-
-### RoomInventory
-
-Responsible for:
-
-* storing rooms
-* searching available rooms
-
-### ReservationService
-
-Responsible for:
-
-* reserve room
-* cancel reservation
-* check-in guest
-* check-out guest
-
-### Room Lifecycle
-
-```text
-AVAILABLE
-    ↓
-RESERVED
-    ↓
-OCCUPIED
-    ↓
-AVAILABLE
-```
-
-### Reservation Lifecycle
-
-```text
-CONFIRMED
-    ↓
-CHECKED_IN
-    ↓
-CHECKED_OUT
-
-CONFIRMED
-    ↓
-CANCELLED
-```
-
----
+Overlap check ignores `CANCELLED` and `CHECKED_OUT` reservations. Active reservations live in `ReservationService`; rooms only track current physical status.
 
 ## Architecture
 
 ```mermaid
 flowchart TD
-
     Guest --> ReservationService
-
     ReservationService --> RoomInventory
     ReservationService --> Reservation
-
     Reservation --> Room
     Reservation --> Guest
 ```
 
----
+## Demo
 
-## One-Line Summary
-
-> ReservationService orchestrates room booking, check-in, and check-out while RoomInventory manages room availability.
-
-```
-
-This sets up Phase 2 (State Pattern) very naturally because the reservation lifecycle is already visible in the README.
-```
+`Client.java` — overlap rejection while checked in, then successful booking after check-out.
 
 ---
 
+# Phase 2 - State Pattern
+
+## Why
+
+`ReservationService` uses `if` checks on `BookingStatus` for cancel, check-in, and check-out. States will grow; encapsulate transitions per state.
+
+## Design
+
+| State | Meaning |
+|-------|---------|
+| `ConfirmedState` | Reserved, ready for check-in |
+| `CheckedInState` | Guest in room |
+| `CheckedOutState` | Stay completed |
+| `CancelledState` | Reservation cancelled |
+
+`Reservation` delegates behavior to `ReservationState` instead of status enums + guards in the service.
+
+---
+
+# Phase 3 - Billing
+
+## Goal
+
+Generate bill on check-out.
+
+## Design
+
+- `BillingService` computes amount (e.g. via `PricingStrategy` by room type and nights)
+- `Bill` stores amount and linked `Reservation`
+- Hook from `checkOutGuest` after status moves to `CHECKED_OUT`
