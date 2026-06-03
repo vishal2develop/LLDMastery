@@ -1,59 +1,72 @@
 import java.time.LocalDate;
-import java.util.Arrays;
 
 public class Client {
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
+        testDateOverlapAvailability();
+    }
+
+    private static void testDateOverlapAvailability() {
+        System.out.println("=== Date Overlap Availability ===");
+
+        ReservationService reservationService = setupHotel();
         Guest john = new Guest("John");
         Guest jane = new Guest("Jane");
+
+        LocalDate jun3 = LocalDate.of(2026, 6, 3);
+        LocalDate jun5 = LocalDate.of(2026, 6, 5);
+        LocalDate jun4 = LocalDate.of(2026, 6, 4);
+        LocalDate jun6 = LocalDate.of(2026, 6, 6);
+        LocalDate jun7 = LocalDate.of(2026, 6, 7);
+
+        System.out.println("\n-- Overlapping booking while room is occupied --");
+        Reservation johnStay = reserveAndCheckIn(
+                reservationService, john, RoomType.DELUXE, jun3, jun5);
+        attemptReserve(
+                reservationService, jane, RoomType.DELUXE, jun4, jun6,
+                "Should fail: only one DELUXE room, dates overlap Jun 4–6");
+
+        System.out.println("\n-- Non-overlapping booking after check-out --");
+        reservationService.checkOutGuest(johnStay);
+        Reservation janeStay = reserveAndCheckIn(
+                reservationService, jane, RoomType.DELUXE, jun6, jun7);
+        reservationService.checkOutGuest(janeStay);
+        System.out.println("Reservation completed: " + janeStay.getReservationId());
+    }
+
+    private static ReservationService setupHotel() {
         RoomInventory roomInventory = new RoomInventory();
-        ReservationService reservationService = new ReservationService(roomInventory);
+        roomInventory.addRoom(new Room(1, RoomType.STANDARD));
+        roomInventory.addRoom(new Room(2, RoomType.DELUXE));
+        roomInventory.addRoom(new Room(3, RoomType.SUITE));
+        return new ReservationService(roomInventory);
+    }
 
-        roomInventory.addRoom(new Room(1,RoomType.STANDARD));
-        roomInventory.addRoom(new Room(2,RoomType.DELUXE));
-        roomInventory.addRoom(new Room(3,RoomType.SUITE));
+    private static Reservation reserveAndCheckIn(
+            ReservationService service,
+            Guest guest,
+            RoomType roomType,
+            LocalDate checkIn,
+            LocalDate checkOut) {
+        Reservation reservation = service.reserveRoom(guest, roomType, checkIn, checkOut);
+        service.checkInGuest(reservation);
+        return reservation;
+    }
 
-        // Existing booking: June 3 → June 5
-        Reservation r1 = reservationService.reserveRoom(
-                john,
-                RoomType.DELUXE,
-                LocalDate.of(2026, 6, 3),
-                LocalDate.of(2026, 6, 5)
-        );
-
-        reservationService.checkInGuest(r1);
-
-        // Overlapping booking: June 4 → June 6
-        // Should FAIL if only one DELUXE room exists
+    private static void attemptReserve(
+            ReservationService service,
+            Guest guest,
+            RoomType roomType,
+            LocalDate checkIn,
+            LocalDate checkOut,
+            String expectation) {
+        System.out.println("Expectation: " + expectation);
         try {
-            Reservation r2 = reservationService.reserveRoom(
-                    jane,
-                    RoomType.DELUXE,
-                    LocalDate.of(2026, 6, 4),
-                    LocalDate.of(2026, 6, 6)
-            );
-            System.out.println("Reservation created: " + r2.getReservationId());
-            reservationService.checkInGuest(r2);
+            Reservation reservation = service.reserveRoom(guest, roomType, checkIn, checkOut);
+            service.checkInGuest(reservation);
+            System.out.println("Unexpected success: " + reservation.getReservationId());
         } catch (Exception e) {
             System.out.println("Reservation failed: " + e.getMessage());
         }
-
-        reservationService.checkOutGuest(r1);
-        System.out.println("----------------------------------------------");
-        // Non-overlapping booking: June 6 → June 7
-        // Should PASS
-        Reservation r3 = reservationService.reserveRoom(
-                jane,
-                RoomType.DELUXE,
-                LocalDate.of(2026, 6, 6),
-                LocalDate.of(2026, 6, 7)
-        );
-
-        reservationService.checkInGuest(r3);
-
-        System.out.println("Reservation created: " + r3.getReservationId());
-        reservationService.checkOutGuest(r3);
-
-
     }
 }
