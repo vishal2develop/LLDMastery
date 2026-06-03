@@ -17,7 +17,8 @@ Design a hotel management system that supports:
 ### In Scope
 
 - **Phase 1:** Search, reserve, cancel, check-in, check-out; date-overlap availability
-- **Phase 2:** Repository pattern (`ReservationRepository`); State pattern (reservation lifecycle)
+- **Phase 2:** Repository pattern; State pattern (reservation lifecycle)
+- **Phase 3:** Billing via Strategy pattern (`PricingStrategy`, `BillingService`, `Bill`)
 
 ### Out of Scope
 
@@ -39,8 +40,7 @@ End-to-end booking from search through check-out.
 | `Room` | Room number, type, current status |
 | `RoomInventory` | Stores rooms; searches by type and dates |
 | `Reservation` | Guest, room, dates, lifecycle |
-| `ReservationService` | Orchestrates booking; holds active reservations |
-| `Bill` | Stub — not used yet |
+| `ReservationService` | Orchestrates booking operations |
 
 ## Enums
 
@@ -81,10 +81,6 @@ flowchart TD
     Reservation --> Guest
 ```
 
-## Demo
-
-`Client.java` — overlap blocked while checked in; booking succeeds after check-out.
-
 ---
 
 # Phase 2 - Repository & State Patterns
@@ -92,8 +88,6 @@ flowchart TD
 ## Goal
 
 Separate reservation storage from business logic, and encapsulate lifecycle transitions in state classes.
-
----
 
 ## Repository Pattern
 
@@ -118,9 +112,6 @@ ReservationService → ReservationRepository → in-memory List<Reservation>
 
 - Service depends on the repository, not on `List` management.
 - `RoomInventory` stays unaware of storage; the service passes `getAllReservations()` into search.
-- Swapping in-memory store for DB later only changes the repository.
-
----
 
 ## State Pattern
 
@@ -168,9 +159,6 @@ ReservationService → reservation.checkIn() / checkOut() / cancel()
 
 - New reservations start in `ConfirmedState`.
 - `Reservation.blocksAvailability()` — `true` for `ConfirmedState` or `CheckedInState`; used by `RoomInventory` for overlap checks.
-- `ReservationService` orchestrates only; no status branching.
-
----
 
 ## Phase 2 Architecture
 
@@ -190,10 +178,60 @@ flowchart TD
 
 ## Goal
 
-Generate bill on check-out.
+Generate a bill after check-out from stay dates and room type.
 
-## Design
+## Flow
 
-- `BillingService` + `PricingStrategy` (room type × nights)
-- `Bill` stores amount and linked `Reservation`
-- Invoke from `CheckedInState.checkOut` (or service after checkout)
+```text
+Check-Out → BillingService.generateBill(reservation) → Bill
+```
+
+Billing runs **after** checkout (caller invokes `BillingService`; not inside `CheckedInState`).
+
+## Entities
+
+| Entity | Responsibility |
+|--------|----------------|
+| `PricingStrategy` | Computes amount for a reservation |
+| `StandardRoomPricingStrategy` | `STANDARD` nightly rate |
+| `DeluxeRoomPricingStrategy` | `DELUXE` nightly rate |
+| `SuiteRoomPricingStrategy` | `SUITE` nightly rate |
+| `BillingService` | Picks strategy by `RoomType`, builds `Bill` |
+| `Bill` | `billId`, `amount`, linked `Reservation` |
+
+## Strategy Pattern
+
+```text
+BillingService → PricingStrategy (by RoomType) → calculatePrice(reservation)
+```
+
+| Room type | Rate / night |
+|-----------|----------------|
+| `STANDARD` | 100 |
+| `DELUXE` | 150 |
+| `SUITE` | 200 |
+
+```text
+amount = nights × rate
+nights = days between checkInDate and checkOutDate
+```
+
+`BillingService` selects the concrete strategy via `switch` on `reservation.getRoom().getRoomType()`.
+
+## Phase 3 Architecture
+
+```mermaid
+flowchart TD
+    Client --> ReservationService
+    Client --> BillingService
+    BillingService --> PricingStrategy
+    BillingService --> Bill
+    Bill --> Reservation
+```
+
+## Demo
+
+`Client.java`
+
+- `testDateOverlapAvailability` — overlap + check-out, then `generateBill` per guest
+- `testReservationStateTransitions` — invalid lifecycle transitions (optional)
