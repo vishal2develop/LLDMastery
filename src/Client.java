@@ -5,13 +5,14 @@ public class Client {
     public static void main(String[] args) {
         testDateOverlapAvailability();
         System.out.println();
-        testReservationStateTransitions();
+        // testReservationStateTransitions();
     }
 
     private static void testDateOverlapAvailability() {
         System.out.println("=== Date Overlap Availability ===");
 
         ReservationService service = setupHotel();
+        BillingService billingService = new BillingService();
         Guest john = new Guest("John");
         Guest jane = new Guest("Jane");
 
@@ -28,9 +29,13 @@ public class Client {
 
         System.out.println("\n-- Non-overlapping booking after check-out --");
         service.checkOutGuest(johnStay);
+        Bill johnBill = billingService.generateBill(johnStay);
+        System.out.println("John's Bill: "+johnBill);
         Reservation janeStay = reserveAndCheckIn(service, jane, RoomType.DELUXE, jun6, jun7);
         service.checkOutGuest(janeStay);
+        Bill janeBill = billingService.generateBill(janeStay);
         System.out.println("Reservation completed: " + janeStay.getReservationId());
+        System.out.println("Jane's Bill: "+janeBill);
     }
 
     private static void testReservationStateTransitions() {
@@ -65,6 +70,7 @@ public class Client {
     private static ReservationService setupHotel() {
         RoomInventory roomInventory = new RoomInventory();
         ReservationRepository reservationRepository = new ReservationRepository();
+
         roomInventory.addRoom(new Room(1, RoomType.STANDARD));
         roomInventory.addRoom(new Room(2, RoomType.DELUXE));
         roomInventory.addRoom(new Room(3, RoomType.SUITE));

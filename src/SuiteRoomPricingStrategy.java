@@ -1,0 +1,9 @@
+import java.time.temporal.ChronoUnit;
+
+public class SuiteRoomPricingStrategy implements PricingStrategy{
+    @Override
+    public double calculatePrice(Reservation reservation) {
+        long numberOfNights = ChronoUnit.DAYS.between(reservation.getCheckInDate(), reservation.getCheckOutDate());
+        return numberOfNights * 200;
+    }
+}
