@@ -19,6 +19,7 @@ Design a hotel management system that supports:
 - **Phase 1:** Search, reserve, cancel, check-in, check-out; date-overlap availability
 - **Phase 2:** Repository pattern; State pattern (reservation lifecycle)
 - **Phase 3:** Billing via Strategy pattern (`PricingStrategy`, `BillingService`, `Bill`)
+- **Phase 4:** Facade pattern (`HotelService`) — unified guest-facing API
 
 ### Out of Scope
 
@@ -183,10 +184,10 @@ Generate a bill after check-out from stay dates and room type.
 ## Flow
 
 ```text
-Check-Out → BillingService.generateBill(reservation) → Bill
+Check-Out (complete stay) → BillingService.generateBill(reservation) → Bill
 ```
 
-Billing runs **after** checkout (caller invokes `BillingService`; not inside `CheckedInState`).
+Billing logic stays in `BillingService`; it does not live in `CheckedInState`. Phase 3 callers orchestrate checkout and billing separately (see Phase 4).
 
 ## Entities
 
@@ -222,16 +223,66 @@ nights = days between checkInDate and checkOutDate
 
 ```mermaid
 flowchart TD
-    Client --> ReservationService
-    Client --> BillingService
+    ReservationService --> BillingService
     BillingService --> PricingStrategy
     BillingService --> Bill
     Bill --> Reservation
 ```
 
+---
+
+# Phase 4 - Facade Pattern
+
+## Goal
+
+Expose one simple API for front-desk flows instead of making `Client` coordinate `ReservationService` and `BillingService`.
+
+## Why
+
+Phase 3 left checkout and billing as two steps. That leaks subsystem boundaries and is easy to get wrong (e.g. checkout without a bill).
+
+## Entity
+
+| Entity | Responsibility |
+|--------|----------------|
+| `HotelService` | Facade: delegates to reservation + billing services |
+
+## API
+
+| Method | Delegates to |
+|--------|----------------|
+| `reserveRoom` | `ReservationService` |
+| `checkInGuest` | `ReservationService` |
+| `checkOutGuest` | `ReservationService.checkOutGuest` → `BillingService.generateBill` → returns `Bill` |
+| `cancelReservation` | `ReservationService` |
+
+## Flow
+
+```text
+Client → HotelService.checkOutGuest(reservation)
+              ↓
+         check out (state + room)
+              ↓
+         generate bill → Bill
+```
+
+`ReservationService` and `BillingService` stay unchanged; only orchestration moves to the facade.
+
+## Phase 4 Architecture
+
+```mermaid
+flowchart TD
+    Client --> HotelService
+    HotelService --> ReservationService
+    HotelService --> BillingService
+    ReservationService --> RoomInventory
+    ReservationService --> ReservationRepository
+    BillingService --> PricingStrategy
+```
+
 ## Demo
 
-`Client.java`
+`Client.java` uses `HotelService` only:
 
-- `testDateOverlapAvailability` — overlap + check-out, then `generateBill` per guest
-- `testReservationStateTransitions` — invalid lifecycle transitions (optional)
+- `testDateOverlapAvailability` — reserve, check-in, `checkOutGuest` returns bill
+- `testReservationStateTransitions` — invalid transitions via facade (optional)
