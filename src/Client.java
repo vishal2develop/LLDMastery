@@ -11,8 +11,7 @@ public class Client {
     private static void testDateOverlapAvailability() {
         System.out.println("=== Date Overlap Availability ===");
 
-        ReservationService service = setupHotel();
-        BillingService billingService = new BillingService();
+        HotelService hotel = setupHotel();
         Guest john = new Guest("John");
         Guest jane = new Guest("Jane");
 
@@ -23,90 +22,92 @@ public class Client {
         LocalDate jun7 = LocalDate.of(2026, 6, 7);
 
         System.out.println("\n-- Overlapping booking while room is occupied --");
-        Reservation johnStay = reserveAndCheckIn(service, john, RoomType.DELUXE, jun3, jun5);
-        attemptReserve(service, jane, RoomType.DELUXE, jun4, jun6,
+        Reservation johnStay = reserveAndCheckIn(hotel, john, RoomType.DELUXE, jun3, jun5);
+        attemptReserve(hotel, jane, RoomType.DELUXE, jun4, jun6,
                 "Should fail: only one DELUXE room, dates overlap Jun 4–6");
 
         System.out.println("\n-- Non-overlapping booking after check-out --");
-        service.checkOutGuest(johnStay);
-        Bill johnBill = billingService.generateBill(johnStay);
-        System.out.println("John's Bill: "+johnBill);
-        Reservation janeStay = reserveAndCheckIn(service, jane, RoomType.DELUXE, jun6, jun7);
-        service.checkOutGuest(janeStay);
-        Bill janeBill = billingService.generateBill(janeStay);
+        Bill johnBill = hotel.checkOutGuest(johnStay);
+        System.out.println("John's bill: " + johnBill);
+
+        Reservation janeStay = reserveAndCheckIn(hotel, jane, RoomType.DELUXE, jun6, jun7);
+        Bill janeBill = hotel.checkOutGuest(janeStay);
         System.out.println("Reservation completed: " + janeStay.getReservationId());
-        System.out.println("Jane's Bill: "+janeBill);
+        System.out.println("Jane's bill: " + janeBill);
     }
 
     private static void testReservationStateTransitions() {
         System.out.println("=== Reservation State Transitions ===");
 
-        ReservationService service = setupHotel();
+        HotelService hotel = setupHotel();
         Guest guest = new Guest("Alex");
         LocalDate checkIn = LocalDate.of(2026, 7, 1);
         LocalDate checkOut = LocalDate.of(2026, 7, 3);
 
         System.out.println("\n-- Check-out before check-in --");
-        Reservation confirmed = reserve(service, guest, RoomType.STANDARD, checkIn, checkOut);
+        Reservation confirmed = reserve(hotel, guest, RoomType.STANDARD, checkIn, checkOut);
         attempt("Should fail: guest must check in first",
-                () -> service.checkOutGuest(confirmed));
+                () -> hotel.checkOutGuest(confirmed));
 
         System.out.println("\n-- Cancel after check-in --");
-        Reservation checkedIn = reserveAndCheckIn(service, guest, RoomType.SUITE, checkIn, checkOut);
+        Reservation checkedIn = reserveAndCheckIn(hotel, guest, RoomType.SUITE, checkIn, checkOut);
         attempt("Should fail: cannot cancel a checked-in reservation",
-                () -> service.cancelReservation(checkedIn));
+                () -> hotel.cancelReservation(checkedIn));
 
         System.out.println("\n-- Double check-in --");
         attempt("Should fail: room already checked in",
-                () -> service.checkInGuest(checkedIn));
+                () -> hotel.checkInGuest(checkedIn));
 
         System.out.println("\n-- Cancel while confirmed --");
-        Reservation toCancel = reserve(service, guest, RoomType.DELUXE, checkIn, checkOut);
-        service.cancelReservation(toCancel);
-        Reservation afterCancel = reserve(service, guest, RoomType.DELUXE, checkIn, checkOut);
+        Reservation toCancel = reserve(hotel, guest, RoomType.DELUXE, checkIn, checkOut);
+        hotel.cancelReservation(toCancel);
+        Reservation afterCancel = reserve(hotel, guest, RoomType.DELUXE, checkIn, checkOut);
         System.out.println("Rebooked after cancel: " + afterCancel.getReservationId());
     }
 
-    private static ReservationService setupHotel() {
+    private static HotelService setupHotel() {
         RoomInventory roomInventory = new RoomInventory();
         ReservationRepository reservationRepository = new ReservationRepository();
-
         roomInventory.addRoom(new Room(1, RoomType.STANDARD));
         roomInventory.addRoom(new Room(2, RoomType.DELUXE));
         roomInventory.addRoom(new Room(3, RoomType.SUITE));
-        return new ReservationService(roomInventory, reservationRepository);
+
+        ReservationService reservationService =
+                new ReservationService(roomInventory, reservationRepository);
+        BillingService billingService = new BillingService();
+        return new HotelService(reservationService, billingService);
     }
 
     private static Reservation reserve(
-            ReservationService service,
+            HotelService hotel,
             Guest guest,
             RoomType roomType,
             LocalDate checkIn,
             LocalDate checkOut) {
-        return service.reserveRoom(guest, roomType, checkIn, checkOut);
+        return hotel.reserveRoom(guest, roomType, checkIn, checkOut);
     }
 
     private static Reservation reserveAndCheckIn(
-            ReservationService service,
+            HotelService hotel,
             Guest guest,
             RoomType roomType,
             LocalDate checkIn,
             LocalDate checkOut) {
-        Reservation reservation = reserve(service, guest, roomType, checkIn, checkOut);
-        service.checkInGuest(reservation);
+        Reservation reservation = reserve(hotel, guest, roomType, checkIn, checkOut);
+        hotel.checkInGuest(reservation);
         return reservation;
     }
 
     private static void attemptReserve(
-            ReservationService service,
+            HotelService hotel,
             Guest guest,
             RoomType roomType,
             LocalDate checkIn,
             LocalDate checkOut,
             String expectation) {
         attempt(expectation, () -> {
-            Reservation reservation = reserve(service, guest, roomType, checkIn, checkOut);
-            service.checkInGuest(reservation);
+            Reservation reservation = reserve(hotel, guest, roomType, checkIn, checkOut);
+            hotel.checkInGuest(reservation);
         });
     }
 
