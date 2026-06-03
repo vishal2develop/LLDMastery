@@ -20,6 +20,7 @@ Design a hotel management system that supports:
 - **Phase 2:** Repository pattern; State pattern (reservation lifecycle)
 - **Phase 3:** Billing via Strategy pattern (`PricingStrategy`, `BillingService`, `Bill`)
 - **Phase 4:** Facade pattern (`HotelService`) — unified guest-facing API
+- **Phase 5:** Concurrency — `synchronized` on `ReservationService.reserveRoom`
 
 ### Out of Scope
 
@@ -282,7 +283,59 @@ flowchart TD
 
 ## Demo
 
-`Client.java` uses `HotelService` only:
+`Client.java` uses `HotelService`:
 
 - `testDateOverlapAvailability` — reserve, check-in, `checkOutGuest` returns bill
-- `testReservationStateTransitions` — invalid transitions via facade (optional)
+- `testReservationStateTransitions` — invalid transitions (optional)
+
+---
+
+# Phase 5 - Concurrency
+
+## Problem
+
+Multiple guests may call `reserveRoom` at the same time for the last available room.
+
+Without synchronization:
+
+```text
+Thread A: search → room 2 available
+Thread B: search → room 2 available
+Both save reservation for room 2 ❌
+```
+
+## Solution
+
+`synchronized` on `ReservationService.reserveRoom()`.
+
+Makes this sequence atomic:
+
+```text
+search available rooms → pick room → mark RESERVED → save reservation
+```
+
+## Design
+
+| Choice | This project |
+|--------|----------------|
+| Lock target | `ReservationService` instance (method-level `synchronized`) |
+| Protected operation | `reserveRoom` only |
+| Facade | `HotelService.reserveRoom` delegates into the synchronized method |
+
+**Trade-off:** All reservations serialize on one service instance — simple for in-memory MVP. Finer option: lock per `Room` (like Car Rental’s per-`Vehicle` lock) so different rooms can reserve in parallel.
+
+## Alternatives
+
+| Option | When to use |
+|--------|-------------|
+| `synchronized` | In-memory MVP, basic mutual exclusion |
+| `ReentrantLock` | `tryLock`, timeouts, fairness |
+| DB transaction + row lock | Persistent, production-grade booking |
+
+## Key Rule
+
+> Search + assign room + persist reservation must behave as one atomic step.
+
+## Demo
+
+`Client.testConcurrentReservation` — multiple threads, one `DELUXE` room; exactly one reservation succeeds.

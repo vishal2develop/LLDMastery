@@ -1,10 +1,16 @@
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class Client {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         testDateOverlapAvailability();
         System.out.println();
+        testConcurrentReservation();
         // testReservationStateTransitions();
     }
 
@@ -34,6 +40,47 @@ public class Client {
         Bill janeBill = hotel.checkOutGuest(janeStay);
         System.out.println("Reservation completed: " + janeStay.getReservationId());
         System.out.println("Jane's bill: " + janeBill);
+    }
+
+    private static void testConcurrentReservation() throws Exception {
+        System.out.println("=== Concurrent Reservation ===");
+
+        HotelService hotel = setupSingleDeluxeHotel();
+        LocalDate checkIn = LocalDate.of(2026, 8, 1);
+        LocalDate checkOut = LocalDate.of(2026, 8, 3);
+        List<Guest> guests = List.of(new Guest("A"), new Guest("B"), new Guest("C"));
+
+        ExecutorService executor = Executors.newFixedThreadPool(3);
+        List<Future<Reservation>> futures = new ArrayList<>();
+
+        for (Guest guest : guests) {
+            futures.add(executor.submit(() ->
+                    hotel.reserveRoom(guest, RoomType.DELUXE, checkIn, checkOut)));
+        }
+        executor.shutdown();
+
+        int successCount = 0;
+        for (Future<Reservation> future : futures) {
+            try {
+                Reservation reservation = future.get();
+                successCount++;
+                System.out.println("Reservation success: " + reservation.getReservationId()
+                        + " (room " + reservation.getRoom().getRoomNumber() + ")");
+            } catch (Exception e) {
+                Throwable cause = e.getCause() != null ? e.getCause() : e;
+                System.out.println("Reservation failed: " + cause.getMessage());
+            }
+        }
+        System.out.println("Successful reservations: " + successCount + " (expected 1)");
+    }
+
+    private static HotelService setupSingleDeluxeHotel() {
+        RoomInventory roomInventory = new RoomInventory();
+        ReservationRepository reservationRepository = new ReservationRepository();
+        roomInventory.addRoom(new Room(2, RoomType.DELUXE));
+        ReservationService reservationService =
+                new ReservationService(roomInventory, reservationRepository);
+        return new HotelService(reservationService, new BillingService());
     }
 
     private static void testReservationStateTransitions() {

@@ -12,7 +12,8 @@ public class ReservationService {
         this.reservationRepository = reservationRepository;
     }
 
-    public Reservation reserveRoom(Guest guest, RoomType roomType, LocalDate checkInDate, LocalDate checkOutDate) {
+    // For Concurrency-synchronized - To prevent double booking
+    public synchronized Reservation reserveRoom(Guest guest, RoomType roomType, LocalDate checkInDate, LocalDate checkOutDate) {
         // Step 1: Search for available rooms
         List<Room> rooms = roomInventory.searchAvailableRooms(roomType, checkInDate, checkOutDate,reservationRepository.getAllReservations());
         // Step 2: Pick the first available room and mark it as reserved
