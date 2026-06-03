@@ -14,14 +14,13 @@ public class ReservationService {
 
     public Reservation reserveRoom(Guest guest, RoomType roomType, LocalDate checkInDate, LocalDate checkOutDate) {
         // Step 1: Search for available rooms
-        List<Room> rooms = roomInventory.searchAvailableRooms(roomType);
+        List<Room> rooms = roomInventory.searchAvailableRooms(roomType, checkInDate, checkOutDate,reservations);
         // Step 2: Pick the first available room and mark it as reserved
         if (rooms.isEmpty()) {
             throw new IllegalStateException("No available rooms for the selected room type.");
         }
         Room room = rooms.getFirst();
         room.setRoomStatus(RoomStatus.RESERVED);
-
 
 
         // Step 3: Create a Reservation and add it to the list
