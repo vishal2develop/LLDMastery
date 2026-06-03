@@ -22,7 +22,7 @@ public class RoomInventory {
             }
 
             // Check if the reservation is cancelled or checked out
-            if(reservation.getBookingStatus() == BookingStatus.CANCELLED || reservation.getBookingStatus() == BookingStatus.CHECKED_OUT){
+            if (!reservation.blocksAvailability()) {
                 continue;
             }
 

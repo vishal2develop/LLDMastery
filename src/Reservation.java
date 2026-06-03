@@ -4,7 +4,7 @@ public class Reservation {
     private String reservationId;
     private Guest guest;
     private Room room;
-    private BookingStatus bookingStatus;
+    private ReservationState reservationState;
 
 
     private LocalDate checkInDate;
@@ -15,18 +15,41 @@ public class Reservation {
             Guest guest,
             Room room,
             LocalDate checkInDate,
-            LocalDate checkOutDate,
-            BookingStatus bookingStatus
+            LocalDate checkOutDate
     ) {
         this.reservationId = reservationId;
         this.guest = guest;
         this.room = room;
         this.checkInDate = checkInDate;
         this.checkOutDate = checkOutDate;
-        this.bookingStatus = bookingStatus;
+        this.reservationState = new ConfirmedState();
     }
 
-    // Getter methods
+    public void checkIn(){
+        reservationState.checkIn(this);
+    }
+    public void checkOut(){
+        reservationState.checkOut(this);
+    }
+    public void cancel(){
+        reservationState.cancel(this);
+    }
+
+    // Check if the reservation is blocked by another reservation
+    public boolean blocksAvailability() {
+        return reservationState instanceof ConfirmedState
+                || reservationState instanceof CheckedInState;
+    }
+
+    public void setReservationState(ReservationState reservationState) {
+        this.reservationState = reservationState;
+    }
+
+    public ReservationState getReservationState() {
+        return reservationState;
+    }
+
+    // Getter and setter methods
 
     public String getReservationId() {
         return reservationId;
@@ -39,14 +62,6 @@ public class Reservation {
     }
     public LocalDate getCheckOutDate() {
         return checkOutDate;
-    }
-
-    public BookingStatus getBookingStatus() {
-        return bookingStatus;
-    }
-
-    public void setBookingStatus(BookingStatus bookingStatus) {
-        this.bookingStatus = bookingStatus;
     }
 
     public Guest getGuest() {

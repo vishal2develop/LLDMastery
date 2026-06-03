@@ -14,11 +14,10 @@ Design a hotel management system that supports:
 
 ## Scope
 
-### In Scope (Phase 1)
+### In Scope
 
-- Search rooms by type and date range
-- Reserve, cancel, check-in, check-out
-- Date-overlap availability
+- **Phase 1:** Search, reserve, cancel, check-in, check-out; date-overlap availability
+- **Phase 2:** Repository pattern (`ReservationRepository`); State pattern (reservation lifecycle)
 
 ### Out of Scope
 
@@ -39,18 +38,15 @@ End-to-end booking from search through check-out.
 | `Guest` | Hotel customer |
 | `Room` | Room number, type, current status |
 | `RoomInventory` | Stores rooms; searches by type and dates |
-| `Reservation` | Guest, room, dates, booking status |
-| `ReservationService` | Orchestrates booking lifecycle |
-| `Bill` | Stub only — not used in flow yet |
+| `Reservation` | Guest, room, dates, lifecycle |
+| `ReservationService` | Orchestrates booking; holds active reservations |
+| `Bill` | Stub — not used yet |
 
 ## Enums
 
 **RoomType:** `STANDARD`, `DELUXE`, `SUITE`
 
 **RoomStatus:** `AVAILABLE` → `RESERVED` → `OCCUPIED` → `AVAILABLE`
-
-**BookingStatus:** `CONFIRMED` → `CHECKED_IN` → `CHECKED_OUT`  
-Branch: `CONFIRMED` → `CANCELLED`
 
 ## Flow
 
@@ -62,8 +58,8 @@ Search Room → Reserve → Check-In → Check-Out
 
 | Component | Role |
 |-----------|------|
-| `RoomInventory` | Filter by `RoomType`; skip rooms with overlapping active reservations |
-| `ReservationService` | Reserve, cancel, check-in, check-out; owns the reservation list |
+| `RoomInventory` | Filter by `RoomType`; exclude rooms with overlapping blocking reservations |
+| `ReservationService` | Reserve, cancel, check-in, check-out |
 
 **Availability** uses reservation **date overlap**, not room status alone. One room can hold multiple bookings across non-overlapping ranges.
 
@@ -72,7 +68,7 @@ Existing Jun 3–5, request Jun 4–6 → unavailable
 Existing Jun 3–5, request Jun 6–7 → available
 ```
 
-Overlap check ignores `CANCELLED` and `CHECKED_OUT` reservations. Active reservations live in `ReservationService`; rooms only track current physical status.
+Rooms track physical status; reservations and overlap logic live separately.
 
 ## Architecture
 
@@ -87,26 +83,106 @@ flowchart TD
 
 ## Demo
 
-`Client.java` — overlap rejection while checked in, then successful booking after check-out.
+`Client.java` — overlap blocked while checked in; booking succeeds after check-out.
 
 ---
 
-# Phase 2 - State Pattern
+# Phase 2 - Repository & State Patterns
 
-## Why
+## Goal
 
-`ReservationService` uses `if` checks on `BookingStatus` for cancel, check-in, and check-out. States will grow; encapsulate transitions per state.
+Separate reservation storage from business logic, and encapsulate lifecycle transitions in state classes.
 
-## Design
+---
 
-| State | Meaning |
-|-------|---------|
-| `ConfirmedState` | Reserved, ready for check-in |
-| `CheckedInState` | Guest in room |
-| `CheckedOutState` | Stay completed |
-| `CancelledState` | Reservation cancelled |
+## Repository Pattern
 
-`Reservation` delegates behavior to `ReservationState` instead of status enums + guards in the service.
+### Why
+
+Phase 1 kept reservations inside `ReservationService`. That couples orchestration with storage and makes overlap search harder to reuse.
+
+### Design
+
+`ReservationRepository` abstracts how reservations are stored and retrieved.
+
+| Method | Purpose |
+|--------|---------|
+| `saveReservation` | Persist new booking |
+| `getAllReservations` | Feed overlap checks in `RoomInventory` |
+| `getReservationById` | Lookup by id |
+| `removeReservation` | Optional cleanup |
+
+```text
+ReservationService → ReservationRepository → in-memory List<Reservation>
+```
+
+- Service depends on the repository, not on `List` management.
+- `RoomInventory` stays unaware of storage; the service passes `getAllReservations()` into search.
+- Swapping in-memory store for DB later only changes the repository.
+
+---
+
+## State Pattern
+
+### Why
+
+Lifecycle rules (`checkIn`, `checkOut`, `cancel`) do not belong in the service as `if` checks on status.
+
+### Entities
+
+| Type | Classes |
+|------|---------|
+| `ReservationState` | `ConfirmedState`, `CheckedInState`, `CheckedOutState`, `CancelledState` |
+
+### Lifecycle
+
+```text
+CONFIRMED → CHECKED_IN → CHECKED_OUT
+CONFIRMED → CANCELLED
+```
+
+```mermaid
+stateDiagram-v2
+    [*] --> Confirmed
+    Confirmed --> CheckedIn: checkIn
+    CheckedIn --> CheckedOut: checkOut
+    Confirmed --> Cancelled: cancel
+```
+
+### State Behavior
+
+| State | checkIn | checkOut | cancel |
+|-------|---------|----------|--------|
+| `ConfirmedState` | Room → `OCCUPIED` | ❌ | Room → `AVAILABLE` |
+| `CheckedInState` | ❌ | Room → `AVAILABLE` | ❌ |
+| `CheckedOutState` | ❌ | ❌ | ❌ |
+| `CancelledState` | ❌ | ❌ | ❌ |
+
+### Key Design
+
+```text
+ReservationService → reservation.checkIn() / checkOut() / cancel()
+                              ↓
+                    current ReservationState
+```
+
+- New reservations start in `ConfirmedState`.
+- `Reservation.blocksAvailability()` — `true` for `ConfirmedState` or `CheckedInState`; used by `RoomInventory` for overlap checks.
+- `ReservationService` orchestrates only; no status branching.
+
+---
+
+## Phase 2 Architecture
+
+```mermaid
+flowchart TD
+    Guest --> ReservationService
+    ReservationService --> RoomInventory
+    ReservationService --> ReservationRepository
+    ReservationRepository --> Reservation
+    Reservation --> ReservationState
+    Reservation --> Room
+```
 
 ---
 
@@ -118,6 +194,6 @@ Generate bill on check-out.
 
 ## Design
 
-- `BillingService` computes amount (e.g. via `PricingStrategy` by room type and nights)
+- `BillingService` + `PricingStrategy` (room type × nights)
 - `Bill` stores amount and linked `Reservation`
-- Hook from `checkOutGuest` after status moves to `CHECKED_OUT`
+- Invoke from `CheckedInState.checkOut` (or service after checkout)
