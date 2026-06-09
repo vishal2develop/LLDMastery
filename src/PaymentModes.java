@@ -1,4 +1,5 @@
 public enum PaymentModes {
     CASH,
-    CREDIT_CARD
+    CREDIT_CARD,
+    UPI
 }
