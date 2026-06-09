@@ -13,7 +13,13 @@ public class Client {
 
         VendingMachine vendingMachine = new VendingMachine("1", inventory);
 
-        vendingMachine.insertMoney(new Payment(PaymentModes.CASH,1300));
+        vendingMachine.insertMoney(new Payment(new CashPaymentStrategy(),1300));
+        // OR
+        // vendingMachine.insertMoney(new Payment(new UpiPaymentStrategy(),1300));
+        // OR
+        // vendingMachine.insertMoney(new Payment(new CreditCardPaymentStrategy(),1300));
+
+
         vendingMachine.selectProduct("2");
         vendingMachine.dispenseProductAndReturnChange();
 
@@ -28,7 +34,7 @@ public class Client {
 
         System.out.println("Negative test case:--------------------------");
 
-        vendingMachine.insertMoney(new Payment(PaymentModes.CASH, 1300));
+        vendingMachine.insertMoney(new Payment(new UpiPaymentStrategy(), 1300));
 
         vendingMachine.selectProduct("2");
 

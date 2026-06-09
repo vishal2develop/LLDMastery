@@ -1,13 +1,14 @@
 public class Payment {
-    private PaymentModes mode;
     private double amount;
+    private PaymentStrategy paymentStrategy;
 
-    public Payment(PaymentModes mode, double amount) {
-        this.mode = mode;
+
+    public Payment(PaymentStrategy strategy, double amount) {
+        this.paymentStrategy = strategy;
         this.amount = amount;
     }
 
-    public PaymentModes getMode() { return mode; }
+    public PaymentStrategy getPaymentStrategy() { return paymentStrategy; }
 
     public double getAmount() { return amount; }
 
