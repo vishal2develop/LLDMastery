@@ -184,6 +184,90 @@ This ensures stock check and decrement happen atomically.
 * Distributed lock → multi-server setup
 
 ---
+# Phase 6 - ReentrantLock
+
+## Goal
+
+Improve concurrency control for product stock updates.
+
+## Design Change
+
+Replaced `synchronized` with `ReentrantLock` in `ProductSlot`.
+
+```text
+ProductSlot
+    ↓
+quantity
+    ↓
+decrementQuantity()
+```
+
+## Why Move Beyond synchronized?
+
+`synchronized` is simple and sufficient for an MVP, but it provides limited control over lock acquisition.
+
+`ReentrantLock` offers:
+
+* `tryLock()` support
+* configurable timeouts
+* fairness policies
+* explicit lock management
+* better extensibility for future requirements
+
+## Fair vs Unfair Locking
+
+### Fair Lock
+
+```java
+new ReentrantLock(true)
+```
+
+Locks are granted in roughly FIFO order.
+
+```text
+Thread A waiting
+Thread B waiting
+Thread C waiting
+
+A → B → C
+```
+
+Pros:
+
+* Prevents thread starvation
+* Predictable behavior
+
+Cons:
+
+* Lower throughput
+
+### Unfair Lock (Default)
+
+```java
+new ReentrantLock()
+```
+
+A newly arriving thread may acquire the lock before older waiting threads.
+
+Pros:
+
+* Better throughput
+* Lower overhead
+
+Cons:
+
+* Possible starvation under heavy contention
+
+## Design Decision
+
+Used:
+
+```java
+new ReentrantLock(true)
+```
+
+to ensure fair access when multiple users attempt to purchase the same product concurrently.
+
 
 # Architecture
 

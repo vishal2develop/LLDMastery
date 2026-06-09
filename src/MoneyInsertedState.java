@@ -12,8 +12,10 @@ public class MoneyInsertedState implements VendingMachineState {
         if (payment.getAmount() < slot.getProduct().getPrice()) {
             throw new IllegalStateException("Insufficient funds!");
         }
-        payment.getPaymentStrategy().processPayment(payment.getAmount());
+        // reserve stock first
         slot.decrementQuantity();
+        // process payment only after stock is reserved
+        payment.getPaymentStrategy().processPayment(payment.getAmount());
         System.out.println(
                 "Dispensing " + slot.getProduct().getName()
         );
