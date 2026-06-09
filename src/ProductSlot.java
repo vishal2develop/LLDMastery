@@ -11,7 +11,10 @@ public class ProductSlot {
 
     public int getQuantity() { return quantity; }
 
-    public void decrementQuantity() {
+    // why synchronized here? - ProductSlot owns quantity
+    // ProductSlot should control quantity mutation
+    // State + state mutation should live together.
+    public synchronized void decrementQuantity() {
         if (quantity <= 0) {
             throw new IllegalStateException("Out of stock!");
         }

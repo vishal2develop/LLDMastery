@@ -12,21 +12,21 @@ Design a vending machine that supports:
 
 ---
 
-# Phase 1 - Core Purchase Flow
+# Core Entities
 
-## Core Entities
-
-| Entity           | Responsibility                    |
-| ---------------- | --------------------------------- |
-| `Product`        | Product metadata                  |
-| `ProductSlot`    | Product inventory                 |
-| `Inventory`      | Stores and searches product slots |
-| `Payment`        | User payment information          |
-| `VendingMachine` | Purchase orchestration            |
+| Entity | Responsibility |
+|---|---|
+| `Product` | Product metadata |
+| `ProductSlot` | Product inventory and quantity |
+| `Inventory` | Stores and searches product slots |
+| `Payment` | Payment information |
+| `VendingMachine` | Purchase orchestration |
 
 ---
 
-## Core Flow
+# Phase 1 - Core Purchase Flow
+
+## Flow
 
 ```text
 Insert Money
@@ -39,8 +39,6 @@ Dispense Product
     ↓
 Return Change
 ```
-
----
 
 ## Design Decisions
 
@@ -63,47 +61,35 @@ This separates product metadata from stock management.
 
 `Inventory` is responsible for:
 
-* storing product slots
+* storing slots
 * product lookup
 
-It does not handle purchase workflows.
+### VendingMachine Responsibility
 
-### VendingMachine as Orchestrator
+`VendingMachine` orchestrates:
 
-`VendingMachine` orchestrates the complete purchase flow:
+* validating funds
+* product selection
+* dispensing products
+* returning change
 
-```text
-Insert Money
-    ↓
-Select Product
-    ↓
-Validate Funds
-    ↓
-Dispense Product
-    ↓
-Return Change
-```
-
-Business workflow is centralized in the machine rather than distributed across inventory and product classes.
-
-## Architecture
-
-```mermaid
-flowchart TD
-
-    VendingMachine --> Inventory
-    VendingMachine --> Payment
-
-    Inventory --> ProductSlot
-    ProductSlot --> Product
-```
 ---
 
 # Phase 2 - State Pattern
 
 ## Goal
 
-Ensure vending machine operations happen in the correct order.
+Ensure operations happen in the correct order.
+
+## States
+
+```text
+IdleState
+MoneyInsertedState
+DispensingState
+```
+
+## State Flow
 
 ```text
 IdleState
@@ -111,75 +97,114 @@ IdleState
 MoneyInsertedState
     ↓ selectProduct
 DispensingState
-    ↓ dispense + return change
+    ↓ dispenseProductAndReturnChange
 IdleState
 ```
 
----
+## Design Decision
 
-## States
-
-| State | Allowed Action |
-|---|---|
-| `IdleState` | Insert money |
-| `MoneyInsertedState` | Select product |
-| `DispensingState` | Dispense product and return change |
+State-specific behavior is moved from `VendingMachine` into state objects.
 
 ---
 
-## Design Decisions
+# Phase 3 - Strategy Pattern
 
-### State Pattern
+## Goal
 
-`VendingMachine` delegates user actions to the current state.
+Support multiple payment methods.
 
-This prevents invalid flows like:
+## Strategies
 
 ```text
-selectProduct() before insertMoney()
+PaymentStrategy
+    ├── CashPaymentStrategy
+    ├── CreditCardPaymentStrategy
+    └── UpiPaymentStrategy
 ```
 
-### Selected Product Handling
+## Design Decision
 
-After product selection, the selected `ProductSlot` is stored inside `VendingMachine`.
-
-This avoids selecting one product and dispensing another.
-
-### Reset After Dispense
-
-After dispensing:
-
-* payment is cleared
-* selected product is cleared
-* machine returns to `IdleState`
+Payment processing behavior varies by payment type and is encapsulated behind a common strategy interface.
 
 ---
 
-## Updated Architecture
+# Phase 4 - Factory Pattern
+
+## Goal
+
+Centralize payment strategy creation.
+
+## Flow
+
+```text
+PaymentMode
+    ↓
+PaymentStrategyFactory
+    ↓
+PaymentStrategy
+```
+
+## Design Decision
+
+Client asks the factory for a payment strategy instead of directly creating concrete strategy objects.
+
+---
+
+# Phase 5 - Concurrency
+
+## Goal
+
+Prevent overselling when multiple users try to buy the last item at the same time.
+
+## Critical Section
+
+```text
+check quantity
+    ↓
+decrement quantity
+```
+
+## Design Decision
+
+`ProductSlot` owns product quantity, so quantity mutation is synchronized inside `ProductSlot`.
+
+```text
+ProductSlot.quantity
+        ↓
+synchronized decrementQuantity()
+```
+
+This ensures stock check and decrement happen atomically.
+
+## Better Alternatives
+
+* `ReentrantLock` → timeout / fairness / tryLock
+* `@Transactional` → DB-backed inventory
+* `@Version` → optimistic locking
+* Distributed lock → multi-server setup
+
+---
+
+# Architecture
 
 ```mermaid
 flowchart TD
 
     Client --> VendingMachine
+
     VendingMachine --> VendingMachineState
-
-    VendingMachineState --> IdleState
-    VendingMachineState --> MoneyInsertedState
-    VendingMachineState --> DispensingState
-
     VendingMachine --> Inventory
+    VendingMachine --> Payment
+
     Inventory --> ProductSlot
     ProductSlot --> Product
+
+    Payment --> PaymentStrategy
+    PaymentStrategyFactory --> PaymentStrategy
 ```
 
 ---
 
 ## One-Line Summary
 
-> State Pattern controls valid vending machine actions and keeps the purchase flow consistent.
-
----
-
-## One-Line Summary
-
-> VendingMachine orchestrates product purchase while Inventory manages product availability and ProductSlot manages stock.
+> VendingMachine orchestrates purchases, State Pattern controls machine behavior, Strategy Pattern handles payment processing, Factory creates payment strategies, and ProductSlot synchronization prevents overselling.
