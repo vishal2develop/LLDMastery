@@ -20,6 +20,8 @@ public class Client {
 
         testSlidingWindow(slidingWindowLimiter);
 
+        System.out.println();
+
         System.out.println("Fixed Window Rate Limiter Metrics:");
         RateLimiterMetrics fixedWindowLimiterMetrics = fixedWindowLimiter.getMetrics();
         System.out.println("Allowed: " + fixedWindowLimiterMetrics.getAllowedRequests());

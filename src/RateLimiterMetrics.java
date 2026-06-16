@@ -1,28 +1,25 @@
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class RateLimiterMetrics {
-    private int allowedRequests;
-    private int rejectedRequests;
+    private final AtomicInteger allowedRequests = new AtomicInteger();
+    private final AtomicInteger rejectedRequests = new AtomicInteger();
 
-    public RateLimiterMetrics() {
-        this.allowedRequests = 0;
-        this.rejectedRequests = 0;
+    public void incrementAllowedRequests() {
+        allowedRequests.incrementAndGet();
     }
 
-    public synchronized void incrementAllowedRequests() {
-        allowedRequests++;
-    }
-
-    public synchronized void incrementRejectedRequests() {
-        rejectedRequests++;
+    public void incrementRejectedRequests() {
+        rejectedRequests.incrementAndGet();
     }
 
     // getters
 
-    public synchronized int getAllowedRequests() {
-        return allowedRequests;
+    public int getAllowedRequests() {
+        return allowedRequests.get();
     }
 
-    public synchronized int getRejectedRequests() {
-        return rejectedRequests;
+    public int getRejectedRequests() {
+        return rejectedRequests.get();
     }
 
 }
