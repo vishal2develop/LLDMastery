@@ -20,6 +20,21 @@ public class Client {
         testSlidingWindow(slidingWindowLimiter);
     }
 
+    private static RateLimiter createRateLimiter(
+            RateLimiterType type
+    ) {
+        RateLimitConfig config =
+                new RateLimitConfig(
+                        3,
+                        Duration.ofSeconds(10),
+                        type
+                );
+
+        return new RateLimiter(
+                RateLimiterFactory.createStrategy(config)
+        );
+    }
+
     /**
      * Creates a Fixed Window rate limiter.
      *
@@ -27,15 +42,8 @@ public class Client {
      * 3 requests every 10 seconds.
      */
     private static RateLimiter createFixedWindowRateLimiter() {
-
-        RateLimitConfig config =
-                new RateLimitConfig(
-                        3,
-                        Duration.ofSeconds(10)
-                );
-
-        return new RateLimiter(
-                new FixedWindowStrategy(config)
+        return createRateLimiter(
+                RateLimiterType.FIXED_WINDOW
         );
     }
 
@@ -46,15 +54,8 @@ public class Client {
      * 3 requests every 10 seconds.
      */
     private static RateLimiter createSlidingWindowRateLimiter() {
-
-        RateLimitConfig config =
-                new RateLimitConfig(
-                        3,
-                        Duration.ofSeconds(10)
-                );
-
-        return new RateLimiter(
-                new SlidingWindowStrategy(config)
+        return createRateLimiter(
+                RateLimiterType.SLIDING_WINDOW
         );
     }
 

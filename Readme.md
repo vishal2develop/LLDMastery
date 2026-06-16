@@ -323,21 +323,38 @@ flowchart TD
 
 ---
 
-# Future Enhancements
 
-## Phase 3 - Factory Pattern
 
-```text
-RateLimitConfig
-        ↓
-RateLimiterFactory
-        ↓
-RateLimitingStrategy
+# Phase 3 - Factory Pattern
+
+## Goal
+
+Centralize strategy creation and remove client dependency on concrete implementations.
+
+## Design Decision
 ```
+Before:
 
-Centralizes strategy creation.
+Client
+↓
+new FixedWindowStrategy()
 
 ---
+
+After:
+
+Client
+↓
+RateLimiterFactory
+↓
+RateLimitingStrategy
+```
+Benefits:
+- Centralized object creation
+- Easier to add new algorithms
+- Reduced client coupling
+
+# Future Enhancements
 
 ## Phase 4 - Metrics
 
