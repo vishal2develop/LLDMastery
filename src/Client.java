@@ -1,84 +1,179 @@
 import java.time.Duration;
 
 public class Client {
+
+
     public static void main(String[] args) throws Exception {
 
-        RateLimitConfig config =
-                new RateLimitConfig(3, Duration.ofSeconds(10));
+        RateLimiter fixedWindowLimiter =
+                createFixedWindowRateLimiter();
 
-        RateLimitingStrategy strategy =
-                new FixedWindowStrategy(config);
+        testSameClientLimit(fixedWindowLimiter);
 
-        RateLimiter rateLimiter =
-                new RateLimiter(strategy);
+        testDifferentClients(fixedWindowLimiter);
 
-        testSameClient(rateLimiter);
+        testWindowReset(fixedWindowLimiter);
 
-        System.out.println();
+        RateLimiter slidingWindowLimiter =
+                createSlidingWindowRateLimiter();
 
-        testDifferentClients(rateLimiter);
-
-        testWindowReset(rateLimiter);
+        testSlidingWindow(slidingWindowLimiter);
     }
 
-    private static void testSameClient(RateLimiter rateLimiter) {
-        System.out.println("Same client test:");
+    /**
+     * Creates a Fixed Window rate limiter.
+     *
+     * Limit:
+     * 3 requests every 10 seconds.
+     */
+    private static RateLimiter createFixedWindowRateLimiter() {
+
+        RateLimitConfig config =
+                new RateLimitConfig(
+                        3,
+                        Duration.ofSeconds(10)
+                );
+
+        return new RateLimiter(
+                new FixedWindowStrategy(config)
+        );
+    }
+
+    /**
+     * Creates a Sliding Window rate limiter.
+     *
+     * Limit:
+     * 3 requests every 10 seconds.
+     */
+    private static RateLimiter createSlidingWindowRateLimiter() {
+
+        RateLimitConfig config =
+                new RateLimitConfig(
+                        3,
+                        Duration.ofSeconds(10)
+                );
+
+        return new RateLimiter(
+                new SlidingWindowStrategy(config)
+        );
+    }
+
+    /**
+     * Verifies that requests beyond the configured
+     * limit are rejected for the same client.
+     */
+    private static void testSameClientLimit(
+            RateLimiter rateLimiter
+    ) {
+
+        System.out.println(
+                "\nSame Client Test:"
+        );
 
         String clientId = "client-1";
 
         for (int i = 1; i <= 5; i++) {
-            boolean allowed = rateLimiter.allowRequest(clientId);
 
-            System.out.println(
-                    "Request " + i + " -> " +
-                            (allowed ? "ALLOWED" : "REJECTED")
-            );
-        }
-    }
-
-    private static void testDifferentClients(
-            RateLimiter rateLimiter
-    ) {
-        System.out.println("Different clients test:");
-
-        String[] clients = {
-                "client-4",
-                "client-5",
-                "client-6"
-        };
-
-        for (String clientId : clients) {
             boolean allowed =
                     rateLimiter.allowRequest(clientId);
 
             System.out.println(
-                    clientId + " -> " +
-                            (allowed ? "ALLOWED" : "REJECTED")
+                    "Request " + i + " -> "
+                            + (allowed
+                            ? "ALLOWED"
+                            : "REJECTED")
             );
         }
     }
 
-    // Test the window reset after 10 seconds
+    /**
+     * Verifies that each client maintains
+     * an independent request counter.
+     */
+    private static void testDifferentClients(
+            RateLimiter rateLimiter
+    ) {
+
+        System.out.println(
+                "\nDifferent Clients Test:"
+        );
+
+        String[] clients = {
+                "client-2",
+                "client-3",
+                "client-4"
+        };
+
+        for (String clientId : clients) {
+
+            boolean allowed =
+                    rateLimiter.allowRequest(clientId);
+
+            System.out.println(
+                    clientId + " -> "
+                            + (allowed
+                            ? "ALLOWED"
+                            : "REJECTED")
+            );
+        }
+    }
+
+    /**
+     * Verifies that requests are allowed again
+     * once the configured window expires.
+     */
     private static void testWindowReset(
             RateLimiter rateLimiter
-    ) throws Exception {
+    ) throws InterruptedException {
 
-        System.out.println("Window reset test:");
+        System.out.println(
+                "\nWindow Reset Test:"
+        );
 
         String clientId = "client-reset";
 
-        for (int i = 1; i <= 3; i++) {
+        for (int i = 0; i < 3; i++) {
             rateLimiter.allowRequest(clientId);
         }
 
-        // simulate a delay of 10 seconds
         Thread.sleep(11000);
 
-        // allow the client to make a request again with a fresh window.
         System.out.println(
-                rateLimiter.allowRequest(clientId)
+                "Request after reset -> "
+                        + (rateLimiter.allowRequest(clientId)
+                        ? "ALLOWED"
+                        : "REJECTED")
         );
     }
 
+    /**
+     * Demonstrates Sliding Window behaviour.
+     *
+     * Requests are evaluated using a rolling
+     * time window rather than fixed buckets.
+     */
+    private static void testSlidingWindow(
+            RateLimiter rateLimiter
+    ) {
+
+        System.out.println(
+                "\nSliding Window Test:"
+        );
+
+        String clientId = "sliding-client";
+
+        for (int i = 1; i <= 5; i++) {
+
+            boolean allowed =
+                    rateLimiter.allowRequest(clientId);
+
+            System.out.println(
+                    "Request " + i + " -> "
+                            + (allowed
+                            ? "ALLOWED"
+                            : "REJECTED")
+            );
+        }
+    }
 
 }

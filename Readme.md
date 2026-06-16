@@ -5,7 +5,7 @@
 Design a rate limiter that supports:
 
 * Configurable request limits
-* Different rate limiting algorithms
+* Multiple rate limiting algorithms
 * Thread safety
 * Extensibility
 * Metrics and monitoring
@@ -14,20 +14,21 @@ Design a rate limiter that supports:
 
 # Core Components
 
-| Component              | Responsibility              |
-| ---------------------- | --------------------------- |
-| `RateLimiter`          | Facade / entry point        |
-| `RateLimitingStrategy` | Rate limiting algorithm     |
-| `RateLimitConfig`      | Limit configuration         |
-| `RequestCounter`       | Per-client request tracking |
+| Component              | Responsibility                  |
+| ---------------------- | ------------------------------- |
+| `RateLimiter`          | Facade / entry point            |
+| `RateLimitingStrategy` | Rate limiting algorithm         |
+| `RateLimitConfig`      | Rate limit configuration        |
+| `RequestCounter`       | Fixed window request tracking   |
+| `SlidingWindowCounter` | Sliding window request tracking |
 
 ---
 
-# Phase 1 - Fixed Window Rate Limiter
+# Phase 1 - Fixed Window Strategy
 
 ## Goal
 
-Limit requests within a fixed time window.
+Limit requests within a fixed time bucket.
 
 Example:
 
@@ -37,7 +38,7 @@ Example:
 
 ---
 
-## Core Flow
+## Flow
 
 ```text
 Request
@@ -55,9 +56,7 @@ Allow / Reject
 
 ### Strategy from Day One
 
-Requirements explicitly mention support for multiple rate limiting algorithms.
-
-To avoid coupling the limiter to a specific implementation:
+Multiple algorithms are expected.
 
 ```text
 RateLimitingStrategy
@@ -65,7 +64,7 @@ RateLimitingStrategy
 FixedWindowStrategy
 ```
 
-was introduced from the beginning.
+This keeps the limiter open for future strategies.
 
 ---
 
@@ -85,14 +84,12 @@ RateLimitingStrategy
 
 ### RequestCounter
 
-Request tracking was extracted into a dedicated object.
-
-Responsible for:
+A dedicated object stores:
 
 * request count
 * window start time
 
-This keeps strategy logic focused on rate limiting rules.
+This keeps algorithm logic separate from state management.
 
 ---
 
@@ -106,15 +103,12 @@ ConcurrentHashMap<String, RequestCounter>
 
 Benefits:
 
-* concurrent reads
-* concurrent writes
-* thread-safe client counter storage
+* thread-safe access
+* independent counters per client
 
 ---
 
 ### Fine-Grained Synchronization
-
-A `ConcurrentHashMap` alone is not sufficient.
 
 The following operation must be atomic:
 
@@ -124,16 +118,13 @@ check count
 increment count
 ```
 
-To prevent race conditions, synchronization is performed on the individual `RequestCounter`.
+Synchronization is performed on the individual counter:
 
 ```java
 synchronized(counter)
 ```
 
-Benefits:
-
-* correctness for the same client
-* parallelism across different clients
+This allows:
 
 ```text
 clientA → counterA lock
@@ -158,6 +149,161 @@ Count < Limit ?
 
 ---
 
+# Phase 2 - Sliding Window Strategy
+
+## Goal
+
+Provide more accurate rate limiting by evaluating requests over a rolling time window.
+
+---
+
+## Problem with Fixed Window
+
+A client can exploit window boundaries:
+
+```text
+5 requests at 10:00:59
+5 requests at 10:01:00
+```
+
+Result:
+
+```text
+10 requests in ~1 second
+```
+
+even though the configured limit is:
+
+```text
+5 requests / minute
+```
+
+---
+
+## Flow
+
+```text
+Request
+    ↓
+SlidingWindowStrategy
+    ↓
+Remove Expired Requests
+    ↓
+Active Requests < Limit ?
+    ↓
+Allow / Reject
+```
+
+---
+
+## Design Decisions
+
+### Dedicated SlidingWindowCounter
+
+Fixed Window requires:
+
+```text
+count
+windowStartTime
+```
+
+Sliding Window requires:
+
+```text
+request timestamps
+```
+
+To keep both algorithms independent:
+
+```text
+SlidingWindowCounter
+        ↓
+Deque<Long>
+```
+
+was introduced.
+
+---
+
+### Deque for Request Tracking
+
+Requests arrive in chronological order.
+
+```text
+Oldest ------------------> Newest
+```
+
+Operations required:
+
+* remove oldest timestamps
+* add newest timestamp
+
+`Deque` provides:
+
+```text
+O(1) insertion
+O(1) removal
+```
+
+for both operations.
+
+---
+
+### Cleanup Before Validation
+
+Before evaluating a request:
+
+```text
+Remove timestamps outside
+the current rolling window
+```
+
+The remaining queue size represents:
+
+```text
+Active requests inside window
+```
+
+---
+
+### Per-Client Synchronization
+
+Just like Fixed Window:
+
+```java
+synchronized(counter)
+```
+
+is used to protect:
+
+```text
+remove expired timestamps
+    ↓
+check limit
+    ↓
+add timestamp
+```
+
+as a single atomic operation.
+
+---
+
+## Sliding Window Algorithm
+
+```text
+Current Time
+        ↓
+Calculate Window Start
+        ↓
+Remove Expired Requests
+        ↓
+Active Requests < Limit ?
+        ↓
+Allow / Reject
+```
+
+---
+
 ## Architecture
 
 ```mermaid
@@ -168,25 +314,16 @@ flowchart TD
     RateLimiter --> RateLimitingStrategy
 
     RateLimitingStrategy --> FixedWindowStrategy
+    RateLimitingStrategy --> SlidingWindowStrategy
 
     FixedWindowStrategy --> RequestCounter
+
+    SlidingWindowStrategy --> SlidingWindowCounter
 ```
 
 ---
 
 # Future Enhancements
-
-## Phase 2 - Sliding Window Strategy
-
-```text
-RateLimitingStrategy
-    ├── FixedWindowStrategy
-    └── SlidingWindowStrategy
-```
-
-Provides smoother request distribution.
-
----
 
 ## Phase 3 - Factory Pattern
 
@@ -235,4 +372,4 @@ Production-ready implementation using:
 
 ## One-Line Summary
 
-> RateLimiter delegates request validation to pluggable rate limiting strategies while maintaining thread-safe request counters per client.
+> RateLimiter delegates request validation to pluggable rate limiting strategies while maintaining thread-safe request tracking per client.
