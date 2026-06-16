@@ -289,12 +289,29 @@ Each can be incremented atomically without locking the whole metrics object.
 ```mermaid
 flowchart TD
 
+    Client --> RateLimiterFactory
     Client --> RateLimiter
+
+    subgraph Core
+        RateLimiter
+        RateLimiterMetrics
+    end
+
+    subgraph Strategy
+        RateLimitingStrategy
+        FixedWindowStrategy
+        SlidingWindowStrategy
+    end
+
+    subgraph State
+        RequestCounter
+        SlidingWindowCounter
+    end
+
+    RateLimiterFactory --> RateLimitingStrategy
 
     RateLimiter --> RateLimitingStrategy
     RateLimiter --> RateLimiterMetrics
-
-    RateLimiterFactory --> RateLimitingStrategy
 
     RateLimitingStrategy --> FixedWindowStrategy
     RateLimitingStrategy --> SlidingWindowStrategy
