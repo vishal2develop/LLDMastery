@@ -1,4 +1,5 @@
 import java.time.Duration;
+import java.util.Arrays;
 
 public class Client {
 
@@ -18,6 +19,24 @@ public class Client {
                 createSlidingWindowRateLimiter();
 
         testSlidingWindow(slidingWindowLimiter);
+
+        System.out.println("Fixed Window Rate Limiter Metrics:");
+        RateLimiterMetrics fixedWindowLimiterMetrics = fixedWindowLimiter.getMetrics();
+        System.out.println("Allowed: " + fixedWindowLimiterMetrics.getAllowedRequests());
+        System.out.println("Rejected: " + fixedWindowLimiterMetrics.getRejectedRequests());
+
+        System.out.println();
+        System.out.println("###############################################################");
+        System.out.println();
+
+        System.out.println("Sliding Window Rate Limiter Metrics:");
+        RateLimiterMetrics slidingWindowLimiterMetrics = slidingWindowLimiter.getMetrics();
+        System.out.println("Allowed: " + slidingWindowLimiterMetrics.getAllowedRequests());
+        System.out.println("Rejected: " + slidingWindowLimiterMetrics.getRejectedRequests());
+
+
+
+
     }
 
     private static RateLimiter createRateLimiter(
@@ -29,6 +48,8 @@ public class Client {
                         Duration.ofSeconds(10),
                         type
                 );
+
+
 
         return new RateLimiter(
                 RateLimiterFactory.createStrategy(config)
@@ -45,6 +66,7 @@ public class Client {
         return createRateLimiter(
                 RateLimiterType.FIXED_WINDOW
         );
+
     }
 
     /**

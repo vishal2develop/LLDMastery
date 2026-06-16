@@ -4,23 +4,25 @@
 
 Design a rate limiter that supports:
 
-* Configurable request limits
-* Multiple rate limiting algorithms
-* Thread safety
-* Extensibility
-* Metrics and monitoring
+- Configurable request limits
+- Multiple rate limiting algorithms
+- Thread safety
+- Extensibility
+- Metrics and monitoring
 
 ---
 
 # Core Components
 
-| Component              | Responsibility                  |
-| ---------------------- | ------------------------------- |
-| `RateLimiter`          | Facade / entry point            |
-| `RateLimitingStrategy` | Rate limiting algorithm         |
-| `RateLimitConfig`      | Rate limit configuration        |
-| `RequestCounter`       | Fixed window request tracking   |
+| Component | Responsibility |
+|---|---|
+| `RateLimiter` | Facade / entry point |
+| `RateLimitingStrategy` | Rate limiting algorithm |
+| `RateLimitConfig` | Rate limit configuration |
+| `RequestCounter` | Fixed window request tracking |
 | `SlidingWindowCounter` | Sliding window request tracking |
+| `RateLimiterFactory` | Creates rate limiting strategies |
+| `RateLimiterMetrics` | Tracks allowed and rejected requests |
 
 ---
 
@@ -36,8 +38,6 @@ Example:
 100 requests / minute
 ```
 
----
-
 ## Flow
 
 ```text
@@ -50,23 +50,17 @@ FixedWindowStrategy
 Allow / Reject
 ```
 
----
-
 ## Design Decisions
 
 ### Strategy from Day One
 
-Multiple algorithms are expected.
+Multiple algorithms are expected, so the algorithm is abstracted behind:
 
 ```text
 RateLimitingStrategy
-        ↓
-FixedWindowStrategy
 ```
 
-This keeps the limiter open for future strategies.
-
----
+This keeps the limiter extensible.
 
 ### RateLimiter as Facade
 
@@ -80,18 +74,14 @@ RateLimiter
 RateLimitingStrategy
 ```
 
----
-
 ### RequestCounter
 
-A dedicated object stores:
+`RequestCounter` stores:
 
-* request count
-* window start time
+- request count
+- window start time
 
-This keeps algorithm logic separate from state management.
-
----
+This keeps fixed-window state separate from algorithm logic.
 
 ### ConcurrentHashMap
 
@@ -101,16 +91,11 @@ Counters are stored using:
 ConcurrentHashMap<String, RequestCounter>
 ```
 
-Benefits:
-
-* thread-safe access
-* independent counters per client
-
----
+This provides thread-safe counter storage per client.
 
 ### Fine-Grained Synchronization
 
-The following operation must be atomic:
+`ConcurrentHashMap` alone is not enough because this must be atomic:
 
 ```text
 check count
@@ -118,33 +103,17 @@ check count
 increment count
 ```
 
-Synchronization is performed on the individual counter:
+So synchronization is done on the individual counter:
 
 ```java
 synchronized(counter)
 ```
 
-This allows:
+This allows different clients to proceed concurrently.
 
 ```text
 clientA → counterA lock
 clientB → counterB lock
-```
-
-Different clients can proceed concurrently.
-
----
-
-## Fixed Window Algorithm
-
-```text
-Window Expired?
-        ↓
-      Reset
-        ↓
-Count < Limit ?
-        ↓
- Allow / Reject
 ```
 
 ---
@@ -153,9 +122,7 @@ Count < Limit ?
 
 ## Goal
 
-Provide more accurate rate limiting by evaluating requests over a rolling time window.
-
----
+Provide more accurate rate limiting using a rolling time window.
 
 ## Problem with Fixed Window
 
@@ -166,145 +133,158 @@ A client can exploit window boundaries:
 5 requests at 10:01:00
 ```
 
-Result:
-
-```text
-10 requests in ~1 second
-```
-
-even though the configured limit is:
-
-```text
-5 requests / minute
-```
-
----
-
-## Flow
-
-```text
-Request
-    ↓
-SlidingWindowStrategy
-    ↓
-Remove Expired Requests
-    ↓
-Active Requests < Limit ?
-    ↓
-Allow / Reject
-```
-
----
+This allows too many requests in a short burst.
 
 ## Design Decisions
 
-### Dedicated SlidingWindowCounter
+### SlidingWindowCounter
 
-Fixed Window requires:
+Fixed window needs:
 
 ```text
-count
-windowStartTime
+count + windowStartTime
 ```
 
-Sliding Window requires:
+Sliding window needs:
 
 ```text
 request timestamps
 ```
 
-To keep both algorithms independent:
+So a separate `SlidingWindowCounter` is used.
 
-```text
-SlidingWindowCounter
-        ↓
-Deque<Long>
-```
+### Deque for Timestamps
 
-was introduced.
-
----
-
-### Deque for Request Tracking
-
-Requests arrive in chronological order.
+Request timestamps are stored in a `Deque`.
 
 ```text
 Oldest ------------------> Newest
 ```
 
-Operations required:
+This allows:
 
-* remove oldest timestamps
-* add newest timestamp
+- remove expired timestamps from the front
+- add new timestamps at the end
 
-`Deque` provides:
-
-```text
-O(1) insertion
-O(1) removal
-```
-
-for both operations.
-
----
-
-### Cleanup Before Validation
-
-Before evaluating a request:
+## Algorithm
 
 ```text
-Remove timestamps outside
-the current rolling window
-```
-
-The remaining queue size represents:
-
-```text
-Active requests inside window
-```
-
----
-
-### Per-Client Synchronization
-
-Just like Fixed Window:
-
-```java
-synchronized(counter)
-```
-
-is used to protect:
-
-```text
-remove expired timestamps
-    ↓
-check limit
-    ↓
-add timestamp
-```
-
-as a single atomic operation.
-
----
-
-## Sliding Window Algorithm
-
-```text
-Current Time
+Calculate window start
         ↓
-Calculate Window Start
+Remove expired timestamps
         ↓
-Remove Expired Requests
-        ↓
-Active Requests < Limit ?
+Check active request count
         ↓
 Allow / Reject
 ```
 
 ---
 
-## Architecture
+# Phase 3 - Factory Pattern
+
+## Goal
+
+Centralize strategy creation.
+
+## Design Decision
+
+Before factory:
+
+```text
+Client
+    ↓
+new FixedWindowStrategy()
+```
+
+After factory:
+
+```text
+Client
+    ↓
+RateLimiterFactory
+    ↓
+RateLimitingStrategy
+```
+
+Benefits:
+
+- Client does not depend on concrete strategies
+- Strategy creation is centralized
+- New algorithms can be added cleanly
+
+---
+
+# Phase 4 - Metrics
+
+## Goal
+
+Track rate limiter behavior.
+
+Metrics captured:
+
+- allowed requests
+- rejected requests
+
+## Design Decision
+
+Metrics are tracked at the `RateLimiter` level.
+
+```text
+Client
+    ↓
+RateLimiter
+    ↓
+RateLimitingStrategy
+```
+
+Reason:
+
+- Every request passes through `RateLimiter`
+- Metrics are common across all strategies
+- Strategies stay focused only on allow/reject logic
+
+## synchronized vs AtomicInteger
+
+### synchronized
+
+```java
+public synchronized void incrementAllowed() {
+    allowedRequests++;
+}
+```
+
+Use when:
+
+- you want simple thread safety
+- multiple related fields must be updated together
+- readability is more important than performance
+
+### AtomicInteger
+
+```java
+allowedRequests.incrementAndGet();
+```
+
+Use when:
+
+- you are only updating independent counters
+- high concurrency is expected
+- you want lock-free atomic increments
+
+## Chosen Approach
+
+For metrics, `AtomicInteger` is the better fit because allowed and rejected counts are independent counters.
+
+```text
+allowedRequests
+rejectedRequests
+```
+
+Each can be incremented atomically without locking the whole metrics object.
+
+---
+
+# Architecture
 
 ```mermaid
 flowchart TD
@@ -312,81 +292,40 @@ flowchart TD
     Client --> RateLimiter
 
     RateLimiter --> RateLimitingStrategy
+    RateLimiter --> RateLimiterMetrics
+
+    RateLimiterFactory --> RateLimitingStrategy
 
     RateLimitingStrategy --> FixedWindowStrategy
     RateLimitingStrategy --> SlidingWindowStrategy
 
     FixedWindowStrategy --> RequestCounter
-
     SlidingWindowStrategy --> SlidingWindowCounter
 ```
 
 ---
 
-
-
-# Phase 3 - Factory Pattern
-
-## Goal
-
-Centralize strategy creation and remove client dependency on concrete implementations.
-
-## Design Decision
-```
-Before:
-
-Client
-↓
-new FixedWindowStrategy()
-
----
-
-After:
-
-Client
-↓
-RateLimiterFactory
-↓
-RateLimitingStrategy
-```
-Benefits:
-- Centralized object creation
-- Easier to add new algorithms
-- Reduced client coupling
-
 # Future Enhancements
 
-## Phase 4 - Metrics
-
-Track:
-
-* allowed requests
-* rejected requests
-* per-client statistics
-
----
-
-## Phase 5 - Advanced Concurrency
+## Advanced Concurrency
 
 Possible improvements:
 
-* `ReentrantLock`
-* `AtomicInteger`
-* `LongAdder`
+- `ReentrantLock`
+- `LongAdder`
+- per-client lock cleanup
 
----
-
-## Phase 6 - Distributed Rate Limiter
+## Distributed Rate Limiter
 
 Production-ready implementation using:
 
-* Redis
-* Atomic INCR
-* TTL
-* Distributed deployments
+- Redis
+- atomic `INCR`
+- TTL
+- distributed deployments
 
 ---
 
 ## One-Line Summary
 
-> RateLimiter delegates request validation to pluggable rate limiting strategies while maintaining thread-safe request tracking per client.
+> RateLimiter delegates request validation to pluggable strategies and records common metrics at the facade level.
