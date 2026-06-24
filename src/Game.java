@@ -1,18 +1,21 @@
 public class Game {
-    private Board board;
-    private Player player1;
-    private Player player2;
+    private final Board board;
+    private final Player player1;
+    private final Player player2;
 
     private Player currentPlayer;
     private GameStatus status;
 
-    public Game(Player player1, Player player2) {
+    private final WinningStrategy winningStrategy;
+
+    public Game(Player player1, Player player2,int boardSize) {
         this.player1 = player1;
         this.player2 = player2;
-
-        this.board = new Board();
+        this.board = new Board(boardSize);
         this.currentPlayer = player1;
         this.status = GameStatus.IN_PROGRESS;
+
+        this.winningStrategy = new DefaultWinningStrategy();
     }
 
     public void makeMove(int row, int col) {
@@ -22,7 +25,7 @@ public class Game {
             );
         }
         board.placeMove(row, col, currentPlayer);
-        if(board.hasWinner(currentPlayer)) {
+        if(winningStrategy.hasWinner(board, currentPlayer)) {
             status = GameStatus.WON;
             return;
         } else if(board.isBoardFull()) {
@@ -32,7 +35,7 @@ public class Game {
         switchPlayers();
     }
 
-    public void switchPlayers() {
+    private void switchPlayers() {
         currentPlayer = currentPlayer == player1 ? player2 : player1;
     }
 
