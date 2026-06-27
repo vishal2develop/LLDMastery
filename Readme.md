@@ -2,12 +2,12 @@
 
 ## Requirements
 
-* Two player game
+* Two-player game
 * Configurable board size (NxN)
-* Make move
-* Validate move
-* Detect winner
-* Detect draw
+* Move validation
+* Winner detection
+* Draw detection
+* Multiple active games
 * Extensible winning rules
 
 ---
@@ -16,11 +16,12 @@
 
 | Component         | Responsibility              |
 | ----------------- | --------------------------- |
+| `GameController`  | Manages active games        |
 | `Game`            | Orchestrates gameplay       |
-| `Board`           | Manages cells and moves     |
+| `Board`           | Manages board state         |
 | `Cell`            | Represents a board position |
-| `Player`          | Player details and symbol   |
-| `WinningStrategy` | Win detection algorithm     |
+| `Player`          | Player details              |
+| `WinningStrategy` | Winner detection            |
 
 ---
 
@@ -29,7 +30,7 @@
 ## Scope
 
 * Two players
-* NxN board support
+* Configurable board size
 * Move validation
 * Winner detection
 * Draw detection
@@ -44,9 +45,9 @@ Game
     ↓
 Board.placeMove()
     ↓
-Winner ?
+Winner?
     ↓
-Draw ?
+Draw?
     ↓
 Switch Player
 ```
@@ -63,9 +64,9 @@ Game
 Board
 ```
 
-### Board Owns State
+### Board Owns Board State
 
-`Board` manages:
+`Board` is responsible for:
 
 * Cells
 * Move validation
@@ -74,7 +75,7 @@ Board
 
 ### Configurable Board Size
 
-Board size is passed from:
+Board size flows from:
 
 ```text
 Client
@@ -84,14 +85,7 @@ Game
 Board
 ```
 
-allowing future support for:
-
-```text
-3x3
-4x4
-5x5
-NxN
-```
+This allows future support for any `NxN` board.
 
 ### Cell Stores Player
 
@@ -103,7 +97,7 @@ Player
 Symbol
 ```
 
-This avoids duplicating symbol and occupancy state.
+avoiding duplicated state.
 
 ---
 
@@ -111,14 +105,14 @@ This avoids duplicating symbol and occupancy state.
 
 ## Scope
 
-* Extract winner detection from Board
-* Support future winning rule variations
+* Extract winner detection from `Board`
+* Support pluggable winning rules
 
 ## Design Decisions
 
 ### WinningStrategy
 
-Winner detection varies independently from board management.
+Winner detection changes independently from board management.
 
 ```text
 Game
@@ -130,9 +124,9 @@ DefaultWinningStrategy
 
 Benefits:
 
-* Board focuses on board state
-* Winning logic is pluggable
-* Easier to support future variants
+* Separation of concerns
+* Easily extensible for future game variants
+* Board focuses only on board state
 
 ### DefaultWinningStrategy
 
@@ -142,7 +136,58 @@ Current implementation checks:
 * Columns
 * Diagonals
 
-for the active player.
+---
+
+# Phase 3 - GameController
+
+## Scope
+
+* Support multiple active games
+* Centralize game management
+
+## Design Decisions
+
+### GameController as Facade
+
+Clients interact only with `GameController`.
+
+```text
+Client
+  ↓
+GameController
+  ↓
+Game
+```
+
+This hides game creation and move orchestration from the client.
+
+### Singleton
+
+`GameController` is implemented as a Singleton since it acts as the single in-memory registry for all active games.
+
+```text
+gameId
+   ↓
+Game
+```
+
+> Note: Singleton is appropriate for this in-memory LLD. In a distributed system, game state would typically be stored in a shared database or cache.
+
+### Central Game Registry
+
+Active games are maintained using:
+
+```text
+Map<gameId, Game>
+```
+
+Responsibilities:
+
+* Create game
+* Make move
+* Retrieve game
+* Retrieve game status
+* Print board
 
 ---
 
@@ -150,19 +195,21 @@ for the active player.
 
 ```text
 Client
-  ↓
+   │
+   ▼
+GameController (Singleton)
+   │
+   ▼
 Game
-  ↓
-Board
-
-Game
-  ↓
-WinningStrategy
-  ↓
+   ├── Board
+   └── WinningStrategy
+           │
+           ▼
 DefaultWinningStrategy
 
 Board
-  ↓
+   │
+   ▼
 Cell
 ```
 
@@ -170,40 +217,25 @@ Cell
 
 # Future Enhancements
 
-## Phase 3 - Observer Pattern
+## Phase 4 - AI Player
 
-Events:
+* Easy
+* Medium (heuristics)
+* Hard (Minimax)
 
-* Move Made
-* Game Won
-* Game Draw
+## Phase 5 - Persistence
 
-Observers:
+Store and restore game state using a database.
 
-* Logger
-* Scoreboard
-* Notification Service
+## Phase 6 - Concurrency
 
-## Phase 4 - Game Controller
-
-Manage multiple games.
-
-```text
-gameId → Game
-```
-
-Potential Singleton for a single in-memory game registry.
-
-## Phase 5 - Advanced Winning Rules
-
-Support:
-
-* Connect-K
-* Custom win length
-* Alternate game modes
+* Thread-safe `GameController`
+* Concurrent game management
+* `ConcurrentHashMap`
+* Thread-safe Singleton
 
 ---
 
 ## One-Line Summary
 
-> Game orchestrates gameplay, Board manages state, and WinningStrategy encapsulates winner detection logic.
+> `GameController` manages multiple game instances, `Game` orchestrates gameplay, `Board` owns board state, and `WinningStrategy` encapsulates winner detection.

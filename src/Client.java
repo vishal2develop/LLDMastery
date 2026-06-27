@@ -1,4 +1,3 @@
-import java.util.Arrays;
 
 public class Client {
     public static void main(String[] args) {
@@ -10,20 +9,34 @@ public class Client {
 
         Player player1 = new Player("Vishal", Symbol.X);
         Player player2 = new Player("Rahul", Symbol.O);
-        Game game = new Game(player1, player2, 3);
 
+        GameController gameController = GameController.getInstance();
+        System.out.println("Creating a new game...");
+        String gameId = gameController.createGame(player1, player2, 3);
+        System.out.println("Created game with ID: " + gameId);
 
-        game.makeMove(0, 0); // X
-        game.makeMove(1, 0); // O
-        game.makeMove(0, 1); // X
-        game.makeMove(1, 1); // O
-        game.makeMove(0, 2); // X wins
+        playWinningGame(gameController, gameId);
 
-        game.getBoard().printBoard();
-        System.out.println("Game Status: " + game.getStatus());
+        // Print the board
+        gameController.printBoard(gameId);
+        System.out.println();
 
-        if (game.getStatus() == GameStatus.WON) {
-            System.out.println("Winner: " + game.getCurrentPlayer().getPlayerName());
+        GameStatus status = gameController.getGameStatus(gameId);
+        System.out.println("Game Status: " + status);
+
+        if (status == GameStatus.WON) {
+            System.out.println("Winner: " + gameController.getWinner(gameId));
         }
+    }
+
+    private static void playWinningGame(
+            GameController controller,
+            String gameId
+    ) {
+        controller.makeMove(gameId, 0, 0);
+        controller.makeMove(gameId, 1, 0);
+        controller.makeMove(gameId, 0, 1);
+        controller.makeMove(gameId, 1, 1);
+        controller.makeMove(gameId, 0, 2);
     }
 }
