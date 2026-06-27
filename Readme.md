@@ -215,27 +215,93 @@ Cell
 
 ---
 
-# Future Enhancements
+# Phase 4 - Concurrency
 
-## Phase 4 - AI Player
+## Goal
 
-* Easy
-* Medium (heuristics)
-* Hard (Minimax)
+Make `GameController` thread-safe for concurrent access.
 
-## Phase 5 - Persistence
+## Design Decisions
 
-Store and restore game state using a database.
+### Bill Pugh Singleton
 
-## Phase 6 - Concurrency
+Replaced lazy initialization with Bill Pugh Singleton.
 
-* Thread-safe `GameController`
-* Concurrent game management
-* `ConcurrentHashMap`
-* Thread-safe Singleton
+Benefits:
+
+* Thread-safe
+* Lazy initialization
+* No explicit synchronization
+
+### Concurrent Game Registry
+
+Replace:
+
+```text
+HashMap<String, Game>
+```
+
+with:
+
+```text
+ConcurrentHashMap<String, Game>
+```
+
+to safely support concurrent game creation and retrieval.
+
+### Fine-Grained Locking
+
+Synchronize on the individual `Game` instead of the `GameController`.
+
+```text
+Game A → Lock A
+Game B → Lock B
+```
+
+This allows different games to progress concurrently without blocking each other.
+
+---
+
+# Architecture
+
+```text
+Client
+   │
+   ▼
+GameController (Singleton)
+   │
+   ▼
+ConcurrentHashMap<gameId, Game>
+   │
+   ▼
+Game
+   ├── Board
+   └── WinningStrategy
+           │
+           ▼
+DefaultWinningStrategy
+
+Board
+   │
+   ▼
+Cell
+```
+
+---
+
+# Next Phases
+
+## Phase 5
+
+* AI Player (Minimax)
+
+## Phase 6
+
+* Persistence (Database / Redis)
 
 ---
 
 ## One-Line Summary
 
-> `GameController` manages multiple game instances, `Game` orchestrates gameplay, `Board` owns board state, and `WinningStrategy` encapsulates winner detection.
+> `GameController` manages multiple games, `Game` orchestrates gameplay, `Board` manages state, and `WinningStrategy` encapsulates the winning algorithm.
+

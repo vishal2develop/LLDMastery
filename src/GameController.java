@@ -1,24 +1,29 @@
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class GameController {
-    private static GameController instance;
     // gameId -> Game
     // final because gameId never changes
-    private final Map<String, Game> games;
+    private final ConcurrentHashMap<String, Game> games;
 
     private GameController() {
-        this.games = new HashMap<>();
+        this.games = new ConcurrentHashMap<>();
     }
 
-    // singleton pattern
+    /**
+     * Inner helper class is loaded only when
+     * getInstance() is called.
+     */
+    private static class Holder {
+        private static final GameController INSTANCE =
+                new GameController();
+    }
+
+
+    // Bill Pugh Singleton pattern - For multi-threaded environments.
     // Central registry for all active games.
     public static GameController getInstance() {
-        if (instance == null) {
-            instance = new GameController();
-        }
-        return instance;
+        return Holder.INSTANCE;
     }
 
     private Game getExistingGame(String gameId) {
@@ -38,8 +43,12 @@ public class GameController {
         return gameId;
     }
 
+    // Two different games can proceed concurrently.
     public void makeMove(String gameId, int row, int col) {
-        getExistingGame(gameId).makeMove(row, col);
+        Game game = getExistingGame(gameId);
+        synchronized (game) {
+            game.makeMove(row, col);
+        }
     }
 
     public GameStatus getGameStatus(String gameId){
