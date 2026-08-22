@@ -66,13 +66,24 @@ Done:
 7. Switch turns.
 8. Expose read-only move history.
 
+### Phase 4A: Check Detection
+
+Done:
+
+1. `PiecePosition`: read model for `piece + position`.
+2. `Board.getPieces()`: exposes read-only board snapshot.
+3. `CheckDetector.isInCheck(...)`: detects if a king is under attack.
+4. Reuses `MoveValidator` for non-pawn attacks.
+5. Handles pawn attacks separately because pawns move forward but attack diagonally.
+
 Not included yet:
 
-1. Check/checkmate.
-2. Castling.
-3. En passant.
-4. Promotion.
-5. Undo/redo.
+1. Preventing a move that leaves own king in check.
+2. Checkmate/stalemate.
+3. Castling.
+4. En passant.
+5. Promotion.
+6. Undo/redo.
 
 ## Piece Movement Rules
 
@@ -141,7 +152,15 @@ Out of scope: castling, moving into check.
 
 1. Owns placement.
 2. Applies already-validated moves.
-3. Does not enforce turns or piece-specific rules.
+3. Exposes current pieces through read-only `PiecePosition` list.
+4. Does not enforce turns or piece-specific rules.
+
+### CheckDetector
+
+1. Finds the king for a color.
+2. Checks whether any opponent piece attacks that king.
+3. Treats pawn attack separately from pawn movement.
+4. Does not decide checkmate or stalemate.
 
 ## Invariants
 
@@ -151,18 +170,21 @@ Out of scope: castling, moving into check.
 4. Piece remains immutable.
 5. Game owns turn/status/history.
 6. Board move execution assumes validation already happened.
+7. Check detection only reads board state.
 
 ## Roadmap
 
 1. Phase 1: Core domain model.
 2. Phase 2: Basic movement validation.
 3. Phase 3: Move execution, captures, turn switching.
-4. Phase 4: Check, checkmate, stalemate.
-5. Phase 5: Castling, en passant, promotion.
-6. Phase 6: Draw rules.
-7. Phase 7: Undo/redo with Command pattern.
-8. Phase 8: Multiple games and per-game locking.
-9. Phase 9: Persistence with Repository pattern.
+4. Phase 4A: Check detection.
+5. Phase 4B: Prevent illegal self-check moves.
+6. Phase 4C: Checkmate and stalemate.
+7. Phase 5: Castling, en passant, promotion.
+8. Phase 6: Draw rules.
+9. Phase 7: Undo/redo with Command pattern.
+10. Phase 8: Multiple games and per-game locking.
+11. Phase 9: Persistence with Repository pattern.
 
 ## Pattern Timing
 

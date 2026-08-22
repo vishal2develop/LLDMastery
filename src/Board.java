@@ -1,6 +1,9 @@
 import Enums.PieceColor;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Board {
@@ -18,6 +21,7 @@ public class Board {
     public Piece getPiece(Position position) {
         return pieces.get(position);
     }
+
 
     public void placePiece(Position position, Piece piece) {
         if (!isPositionEmpty(position)) {
@@ -114,5 +118,15 @@ public class Board {
 
         // return the made move
         return new Move(from,to,movedPiece,capturedPiece);
+    }
+
+    public List<PiecePosition> getPieces() {
+        List<PiecePosition> result = new ArrayList<>();
+
+        for(Map.Entry<Position, Piece> entry : pieces.entrySet()){
+            result.add(new PiecePosition(entry.getKey(),entry.getValue()));
+        }
+
+        return Collections.unmodifiableList(result);
     }
 }
