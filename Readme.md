@@ -24,12 +24,12 @@ Eventually support:
 
 Done:
 
-1. `Position`: immutable board coordinate, validates `0..7`, supports `equals/hashCode`.
+1. `Position`: immutable coordinate, validates `0..7`, supports `equals/hashCode`.
 2. `Piece`: immutable `PieceType + PieceColor`, does not store position.
 3. `Board`: owns `Map<Position, Piece>`.
 4. `Player`: id, name, color.
 5. `Move`: from, to, moved piece, captured piece.
-6. `Game`: players, board, current turn, status, move history.
+6. `Game`: players, board, turn, status, move history.
 7. Enums: `PieceColor`, `PieceType`, `GameStatus`.
 
 Key decision:
@@ -42,8 +42,6 @@ Game owns flow state.
 
 ### Phase 2: Basic Move Validation
 
-In progress / mostly complete.
-
 Done:
 
 1. `MovementStrategy`
@@ -53,7 +51,20 @@ Done:
 5. `Board.isPathClear(...)`
 6. `MoveValidator`
 
-Phase 2 validates movement patterns only.
+Validates movement patterns only. Does not check king safety.
+
+### Phase 3: Move Execution and Game Flow
+
+Done:
+
+1. `Game.makeMove(...)`
+2. Reject moves unless game is `IN_PROGRESS`.
+3. Validate with `MoveValidator`.
+4. Move pieces through `Board.movePiece(...)`.
+5. Capture opponent piece at destination.
+6. Store move in history.
+7. Switch turns.
+8. Expose read-only move history.
 
 Not included yet:
 
@@ -61,15 +72,14 @@ Not included yet:
 2. Castling.
 3. En passant.
 4. Promotion.
-5. Move execution.
-6. Turn switching.
+5. Undo/redo.
 
 ## Piece Movement Rules
 
 ### Pawn
 
-1. Moves one square forward if destination is empty.
-2. Moves two squares forward from starting row if path is empty.
+1. One square forward if empty.
+2. Two squares forward from starting row if path is empty.
 3. Captures one square diagonally forward.
 4. White moves toward smaller row numbers.
 5. Black moves toward larger row numbers.
@@ -109,9 +119,17 @@ Out of scope: en passant, promotion.
 
 Out of scope: castling, moving into check.
 
-## MoveValidator
+## Responsibility Split
 
-Responsibilities:
+### Game
+
+1. Owns game flow.
+2. Checks game status.
+3. Uses validator.
+4. Records history.
+5. Switches turn.
+
+### MoveValidator
 
 1. Source must contain a piece.
 2. Piece must belong to current player.
@@ -119,7 +137,11 @@ Responsibilities:
 4. Pick strategy by `PieceType`.
 5. Delegate to `canMove(...)`.
 
-It does not move pieces.
+### Board
+
+1. Owns placement.
+2. Applies already-validated moves.
+3. Does not enforce turns or piece-specific rules.
 
 ## Invariants
 
@@ -128,6 +150,7 @@ It does not move pieces.
 3. Board is the source of truth for placement.
 4. Piece remains immutable.
 5. Game owns turn/status/history.
+6. Board move execution assumes validation already happened.
 
 ## Roadmap
 

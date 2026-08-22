@@ -93,4 +93,26 @@ public class Board {
         return piece!=null && piece.getColor()!=playerColor;
     }
 
+    /**
+     * Moves a piece after the move has already been validated by Game/MoveValidator.
+     * Board does not enforce turn rules or piece-specific movement rules.
+     */
+    public Move movePiece(Position from,Position to){
+        // get the piece from the source position (the piece we are moving)
+        Piece movedPiece = getPiece(from);
+
+        // Additional defensive check to make sure we have a piece to move.
+        if (movedPiece == null) {
+            throw new IllegalArgumentException("No piece at source position");
+        }
+        // if we have captured a piece, remove it from the board
+        Piece capturedPiece = removePiece(to);
+
+        // We remove the piece from the source position and place it in the destination position
+        removePiece(from);
+        placePiece(to,movedPiece);
+
+        // return the made move
+        return new Move(from,to,movedPiece,capturedPiece);
+    }
 }

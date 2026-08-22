@@ -2,6 +2,7 @@ import Enums.GameStatus;
 import Enums.PieceColor;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Game {
@@ -9,6 +10,7 @@ public class Game {
     private final Player whitePlayer;
     private final Player blackPlayer;
     private final Board board;
+    private final MoveValidator moveValidator = new MoveValidator();
 
     private PieceColor currentTurn = PieceColor.WHITE;
     private GameStatus status = GameStatus.NOT_STARTED;
@@ -27,11 +29,44 @@ public class Game {
         currentTurn = PieceColor.WHITE;
     }
 
+    public boolean makeMove(Position from, Position to) {
+        // check status of the game
+        if (status != GameStatus.IN_PROGRESS) {
+            return false;
+        }
+        // if the move is invalid, return false
+        if(!moveValidator.isValidMove(board, from, to, currentTurn)){
+            return false;
+        }
+
+        // Make the move
+        Move move = board.movePiece(from,to);
+
+        // track the move history
+        moveHistory.add(move);
+        // switch turns
+        switchTurn();
+        return true;
+    }
+
+    private void switchTurn(){
+        currentTurn = currentTurn == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE;
+    }
+
+
     public PieceColor getCurrentTurn() {
         return currentTurn;
     }
 
     public Board getBoard() {
         return board;
+    }
+
+    public GameStatus getStatus() {
+        return status;
+    }
+
+    public List<Move> getMoveHistory() {
+        return Collections.unmodifiableList(moveHistory);
     }
 }
