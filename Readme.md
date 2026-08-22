@@ -2,159 +2,132 @@
 
 ## Goal
 
-Design a Chess Game phase by phase for senior/staff LLD interview prep.
+Build the design phase by phase for senior/staff LLD interview prep.
 
-Do not build everything at once. Keep each phase small, reviewable, and grounded in clear ownership and invariants.
+Principle: keep the domain clean first; introduce patterns only when they solve a real design pressure.
 
 ## Requirements
 
 Eventually support:
 
-1. Standard chess movement rules.
-2. Check, checkmate, and stalemate.
-3. Castling, en passant, and pawn promotion.
+1. Standard piece movement.
+2. Check, checkmate, stalemate.
+3. Castling, en passant, promotion.
 4. Draw rules.
 5. Undo/redo.
-6. Multiple game sessions.
+6. Multiple games.
 7. Persistence.
 
-## Current Phase
+## Current Status
 
 ### Phase 1: Core Domain Model
 
-Status: mostly complete.
+Done:
 
-Implemented:
+1. `Position`: immutable board coordinate, validates `0..7`, supports `equals/hashCode`.
+2. `Piece`: immutable `PieceType + PieceColor`, does not store position.
+3. `Board`: owns `Map<Position, Piece>`.
+4. `Player`: id, name, color.
+5. `Move`: from, to, moved piece, captured piece.
+6. `Game`: players, board, current turn, status, move history.
+7. Enums: `PieceColor`, `PieceType`, `GameStatus`.
 
-1. `Position`
-   - Immutable row/column coordinate.
-   - Validates range `0..7`.
-   - Implements value-based `equals()` and `hashCode()`.
-
-2. `Piece`
-   - Immutable.
-   - Stores only `PieceType` and `PieceColor`.
-   - Does not know its position.
-
-3. `Board`
-   - Owns piece placement.
-   - Uses `Map<Position, Piece>`.
-   - Supports place/get/remove/check-empty operations.
-
-4. `Player`
-   - Stores id, name, and color.
-
-5. `Move`
-   - Captures move data: source, destination, moved piece, captured piece.
-
-6. `Game`
-   - Owns board, players, turn, status, and move history.
-   - White starts first.
-   - Status starts as `NOT_STARTED`.
-
-7. Enums
-   - `PieceColor`
-   - `PieceType`
-   - `GameStatus`
-
-## Key Decisions
-
-### Board Owns Placement
-
-Use:
+Key decision:
 
 ```text
-Board: Position -> Piece
+Board owns placement.
+Piece does not know its position.
+Game owns flow state.
 ```
 
-Do not store position inside `Piece`.
+### Phase 2: Basic Move Validation
 
-Why:
+In progress / mostly complete.
 
-1. Single source of truth.
-2. Avoids board/piece position mismatch.
-3. Makes lookup, snapshots, undo/redo, and hashing easier later.
+Done:
 
-### Piece Is Immutable
+1. `MovementStrategy`
+2. One strategy per piece.
+3. `Board.hasOwnPiece(...)`
+4. `Board.hasOpponentPiece(...)`
+5. `Board.isPathClear(...)`
+6. `MoveValidator`
 
-`Piece` contains:
+Phase 2 validates movement patterns only.
 
-```text
-PieceType
-PieceColor
-```
-
-Game-specific state like turn, move history, castling eligibility, and en passant should live in `Game` / history, not inside `Piece`.
-
-### Game Owns Flow
-
-`Game` coordinates:
-
-1. Players.
-2. Board.
-3. Current turn.
-4. Game status.
-5. Move history.
-
-The board should not know turns. Pieces should not know the game.
-
-## Phase 1 Invariants
-
-1. Board positions are always within `0..7`.
-2. One position has at most one piece.
-3. A piece has one type and one color.
-4. A piece does not store position.
-5. Board is the source of truth for placement.
-6. Game has one white player and one black player.
-7. White starts.
-8. Only `Game` owns turn state.
-
-## Phase 1 Cleanup
-
-Before Phase 2:
-
-1. Rename `Board.createStandardBoard()` to `createEmptyBoard()` unless it actually places all pieces.
-2. Add `getFrom()` and `getTo()` to `Move`.
-3. Make `Game.moveHistory` final.
-4. Add getters for `gameId`, players, and status if needed.
-
-## Phase 2: Basic Move Validation
-
-Goal: validate normal movement patterns only.
-
-Out of scope:
+Not included yet:
 
 1. Check/checkmate.
 2. Castling.
 3. En passant.
 4. Promotion.
-5. Full legal move validation.
+5. Move execution.
+6. Turn switching.
 
-Introduce Strategy here:
+## Piece Movement Rules
 
-```java
-public interface MovementStrategy {
-    boolean canMove(Board board, Position from, Position to, PieceColor color);
-}
-```
+### Pawn
 
-Strategies:
+1. Moves one square forward if destination is empty.
+2. Moves two squares forward from starting row if path is empty.
+3. Captures one square diagonally forward.
+4. White moves toward smaller row numbers.
+5. Black moves toward larger row numbers.
 
-1. `PawnMovementStrategy`
-2. `RookMovementStrategy`
-3. `KnightMovementStrategy`
-4. `BishopMovementStrategy`
-5. `QueenMovementStrategy`
-6. `KingMovementStrategy`
+Out of scope: en passant, promotion.
 
-Important distinction:
+### Rook
 
-```text
-movement-valid: piece follows its movement pattern
-legal-move: move is valid in full game state
-```
+1. Moves horizontally or vertically.
+2. Cannot jump over pieces.
+3. Destination cannot contain own piece.
 
-Phase 2 focuses on movement-valid.
+### Knight
+
+1. Moves in L-shape: `2 + 1`.
+2. Can jump over pieces.
+3. Destination cannot contain own piece.
+
+### Bishop
+
+1. Moves diagonally.
+2. `abs(rowDiff) == abs(colDiff)`.
+3. Cannot jump over pieces.
+4. Destination cannot contain own piece.
+
+### Queen
+
+1. Combines rook + bishop movement.
+2. Moves straight or diagonal.
+3. Cannot jump over pieces.
+4. Destination cannot contain own piece.
+
+### King
+
+1. Moves one square in any direction.
+2. Destination cannot contain own piece.
+
+Out of scope: castling, moving into check.
+
+## MoveValidator
+
+Responsibilities:
+
+1. Source must contain a piece.
+2. Piece must belong to current player.
+3. Source and destination must differ.
+4. Pick strategy by `PieceType`.
+5. Delegate to `canMove(...)`.
+
+It does not move pieces.
+
+## Invariants
+
+1. A position is always inside the board.
+2. One square has at most one piece.
+3. Board is the source of truth for placement.
+4. Piece remains immutable.
+5. Game owns turn/status/history.
 
 ## Roadmap
 
@@ -170,13 +143,9 @@ Phase 2 focuses on movement-valid.
 
 ## Pattern Timing
 
-Do not introduce patterns early.
-
-Use patterns when they solve real pressure:
-
-1. Strategy: piece movement validation.
+1. Strategy: movement validation.
 2. Command: undo/redo.
-3. Observer: player/UI notifications.
+3. Observer: notifications.
 4. Repository: persistence.
-5. Flyweight: optional scale optimization for shared piece definitions.
+5. Flyweight: optional scale optimization.
 6. Singleton: avoid hard Singleton; prefer app-scoped services.
