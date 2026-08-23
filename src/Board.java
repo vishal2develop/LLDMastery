@@ -14,7 +14,7 @@ public class Board {
         this.pieces = new HashMap<>();
     }
 
-    public static Board createStandardBoard(){
+    public static Board createEmptyBoard(){
         return new Board();
     }
 

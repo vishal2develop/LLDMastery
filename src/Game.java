@@ -12,6 +12,7 @@ public class Game {
     private final Board board;
     private final MoveValidator moveValidator;
     private final CheckDetector checkDetector;
+    private final LegalMoveDetector legalMoveDetector;
 
     private PieceColor currentTurn = PieceColor.WHITE;
     private GameStatus status = GameStatus.NOT_STARTED;
@@ -24,6 +25,7 @@ public class Game {
         this.board = board;
         this.checkDetector = new CheckDetector();
         this.moveValidator = new MoveValidator();
+        this.legalMoveDetector = new LegalMoveDetector();
     }
 
     public void startGame() {
@@ -54,8 +56,23 @@ public class Game {
 
         // track the move history
         moveHistory.add(move);
-        // switch turns
-        switchTurn();
+
+        // get opponents color
+        PieceColor opponentColor = currentTurn == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE;
+
+        boolean opponentHasKingInCheck = checkDetector.isInCheck(board, opponentColor);
+
+        boolean opponentHasLegalMove = legalMoveDetector.hasAnyLegalMove(board, opponentColor);
+
+        if(opponentHasKingInCheck && !opponentHasLegalMove){
+            status = GameStatus.CHECKMATE;
+        } else if (!opponentHasKingInCheck && !opponentHasLegalMove) {
+            status = GameStatus.STALEMATE;
+        }
+        else{
+            switchTurn();
+        }
+
         return true;
     }
 

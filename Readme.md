@@ -84,13 +84,22 @@ Done:
 2. `Game.makeMove(...)`: applies move, checks own king safety, rolls back if needed.
 3. Illegal self-check moves do not change board, turn, or move history.
 
+### Phase 4C: Checkmate and Stalemate
+
+Done:
+
+1. `LegalMoveDetector.hasAnyLegalMove(...)`: brute-force checks if a player has any safe move.
+2. `Game.makeMove(...)`: evaluates opponent state after a successful move.
+3. Sets `CHECKMATE` when opponent is in check and has no legal move.
+4. Sets `STALEMATE` when opponent is not in check and has no legal move.
+5. `Main`: has small demos for rollback and checkmate.
+
 Not included yet:
 
-1. Checkmate/stalemate.
-2. Castling.
-3. En passant.
-4. Promotion.
-5. Undo/redo.
+1. Castling.
+2. En passant.
+3. Promotion.
+4. Undo/redo.
 
 ## Piece Movement Rules
 
@@ -147,8 +156,9 @@ Out of scope: castling, moving into check.
 4. Applies move.
 5. Checks own king safety.
 6. Rolls back illegal self-check moves.
-7. Records history.
-8. Switches turn.
+7. Evaluates opponent checkmate/stalemate.
+8. Records history.
+9. Switches turn only if game remains in progress.
 
 ### MoveValidator
 
@@ -173,6 +183,14 @@ Out of scope: castling, moving into check.
 3. Treats pawn attack separately from pawn movement.
 4. Does not decide checkmate or stalemate.
 
+### LegalMoveDetector
+
+1. Scans all pieces for a player.
+2. Tries every board square as a destination.
+3. Applies only basic-valid moves temporarily.
+4. Rejects trial moves that leave own king in check.
+5. Returns true if at least one safe move exists.
+
 ## Invariants
 
 1. A position is always inside the board.
@@ -183,6 +201,7 @@ Out of scope: castling, moving into check.
 6. Board move execution assumes validation already happened.
 7. Check detection only reads board state.
 8. A rejected self-check move must leave board, turn, and history unchanged.
+9. Checkmate/stalemate is evaluated for the opponent after a successful move.
 
 ## Roadmap
 
