@@ -6,6 +6,8 @@ public class Main {
         runSelfCheckRollbackDemo();
         System.out.println();
         runCheckmateDemo();
+        System.out.println();
+        runStalemateDemo();
     }
 
     private static void runSelfCheckRollbackDemo() {
@@ -46,6 +48,24 @@ public class Main {
         );
 
         printResult("Checkmate demo", game, result);
+    }
+
+    private static void runStalemateDemo() {
+        Board board = Board.createEmptyBoard();
+
+        board.placePiece(new Position(2, 2), new Piece(PieceType.KING, PieceColor.WHITE));
+        board.placePiece(new Position(0, 0), new Piece(PieceType.KING, PieceColor.BLACK));
+        board.placePiece(new Position(2, 3), new Piece(PieceType.QUEEN, PieceColor.WHITE));
+
+        Game game = createGame("G-3", board);
+        game.startGame();
+
+        boolean result = game.makeMove(
+                new Position(2, 3),
+                new Position(1, 2)
+        );
+
+        printResult("Stalemate demo", game, result);
     }
 
     private static Game createGame(String gameId, Board board) {

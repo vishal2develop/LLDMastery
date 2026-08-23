@@ -92,7 +92,7 @@ Done:
 2. `Game.makeMove(...)`: evaluates opponent state after a successful move.
 3. Sets `CHECKMATE` when opponent is in check and has no legal move.
 4. Sets `STALEMATE` when opponent is not in check and has no legal move.
-5. `Main`: has small demos for rollback and checkmate.
+5. `Main`: has small demos for rollback, checkmate, and stalemate.
 
 Not included yet:
 
