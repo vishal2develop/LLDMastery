@@ -129,4 +129,17 @@ public class Board {
 
         return Collections.unmodifiableList(result);
     }
+
+    public void undoMove(Move move){
+        // Remove the moved piece from its current destination.
+        removePiece(move.getTo());
+
+        // place the moved piece back at its original position.
+        placePiece(move.getFrom(),move.getMovedPiece());
+
+        // If there was a captured piece, place it back at the destination square.
+        if(move.getCapturedPiece() != null){
+            placePiece(move.getTo(),move.getCapturedPiece());
+        }
+    }
 }

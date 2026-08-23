@@ -10,7 +10,8 @@ public class Game {
     private final Player whitePlayer;
     private final Player blackPlayer;
     private final Board board;
-    private final MoveValidator moveValidator = new MoveValidator();
+    private final MoveValidator moveValidator;
+    private final CheckDetector checkDetector;
 
     private PieceColor currentTurn = PieceColor.WHITE;
     private GameStatus status = GameStatus.NOT_STARTED;
@@ -21,6 +22,8 @@ public class Game {
         this.whitePlayer = whitePlayer;
         this.blackPlayer = blackPlayer;
         this.board = board;
+        this.checkDetector = new CheckDetector();
+        this.moveValidator = new MoveValidator();
     }
 
     public void startGame() {
@@ -41,6 +44,13 @@ public class Game {
 
         // Make the move
         Move move = board.movePiece(from,to);
+
+        // check if the current player's own king is in check
+        if(checkDetector.isInCheck(board, currentTurn)){
+            // undo the move
+            board.undoMove(move);
+            return false;
+        }
 
         // track the move history
         moveHistory.add(move);

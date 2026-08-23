@@ -76,14 +76,21 @@ Done:
 4. Reuses `MoveValidator` for non-pawn attacks.
 5. Handles pawn attacks separately because pawns move forward but attack diagonally.
 
+### Phase 4B: Prevent Self-Check Moves
+
+Done:
+
+1. `Board.undoMove(...)`: restores board after a trial move.
+2. `Game.makeMove(...)`: applies move, checks own king safety, rolls back if needed.
+3. Illegal self-check moves do not change board, turn, or move history.
+
 Not included yet:
 
-1. Preventing a move that leaves own king in check.
-2. Checkmate/stalemate.
-3. Castling.
-4. En passant.
-5. Promotion.
-6. Undo/redo.
+1. Checkmate/stalemate.
+2. Castling.
+3. En passant.
+4. Promotion.
+5. Undo/redo.
 
 ## Piece Movement Rules
 
@@ -137,8 +144,11 @@ Out of scope: castling, moving into check.
 1. Owns game flow.
 2. Checks game status.
 3. Uses validator.
-4. Records history.
-5. Switches turn.
+4. Applies move.
+5. Checks own king safety.
+6. Rolls back illegal self-check moves.
+7. Records history.
+8. Switches turn.
 
 ### MoveValidator
 
@@ -153,7 +163,8 @@ Out of scope: castling, moving into check.
 1. Owns placement.
 2. Applies already-validated moves.
 3. Exposes current pieces through read-only `PiecePosition` list.
-4. Does not enforce turns or piece-specific rules.
+4. Can undo a move using captured move data.
+5. Does not enforce turns or piece-specific rules.
 
 ### CheckDetector
 
@@ -171,6 +182,7 @@ Out of scope: castling, moving into check.
 5. Game owns turn/status/history.
 6. Board move execution assumes validation already happened.
 7. Check detection only reads board state.
+8. A rejected self-check move must leave board, turn, and history unchanged.
 
 ## Roadmap
 
