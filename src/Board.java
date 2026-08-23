@@ -142,4 +142,11 @@ public class Board {
             placePiece(move.getTo(),move.getCapturedPiece());
         }
     }
+
+    public void replacePiece(Position position, Piece piece){
+        // Used for cases like promotion where the piece changes type.
+        // Since Piece is immutable, we replace the old piece with a new one.
+        removePiece(position);
+        placePiece(position,piece);
+    }
 }

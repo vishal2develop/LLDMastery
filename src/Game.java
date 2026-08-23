@@ -1,5 +1,6 @@
 import Enums.GameStatus;
 import Enums.PieceColor;
+import Enums.PieceType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,6 +55,10 @@ public class Game {
             return false;
         }
 
+        // Promotion is checked only after the move is accepted.
+        // If the move had left own king in check, we would have already rolled it back.
+        handlePromotion(move);
+
         // track the move history
         moveHistory.add(move);
 
@@ -76,9 +81,33 @@ public class Game {
         return true;
     }
 
+    private void handlePromotion(Move move) {
+        // Promotion is not a movement rule.
+        // Movement decides whether a pawn can reach the last row.
+        // Promotion decides what happens after the pawn reaches that row.
+        Piece movedPiece = move.getMovedPiece();
+
+        // Only pawns can promote.
+        if(movedPiece.getType() != PieceType.PAWN){
+            return;
+        }
+
+        // White pawns promote on row 0.
+        // Black pawns promote on row 7.
+        int promotionRow = movedPiece.getColor() == PieceColor.WHITE ? 0 : 7;
+
+        // For now, we keep promotion simple and always promote to queen.
+        // Later, this can become a player choice: queen, rook, bishop, or knight.
+        if(move.getTo().getRow() == promotionRow){
+            board.replacePiece(move.getTo(),
+                    new Piece(PieceType.QUEEN, movedPiece.getColor()));
+        }
+    }
+
     private void switchTurn(){
         currentTurn = currentTurn == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE;
     }
+
 
 
     public PieceColor getCurrentTurn() {

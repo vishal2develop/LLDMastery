@@ -94,11 +94,21 @@ Done:
 4. Sets `STALEMATE` when opponent is not in check and has no legal move.
 5. `Main`: has small demos for rollback, checkmate, and stalemate.
 
+### Phase 5A: Pawn Promotion
+
+Done:
+
+1. `Board.replacePiece(...)`: replaces immutable piece at a position.
+2. `Game.makeMove(...)`: handles promotion after move is accepted.
+3. Pawns promote on last row: white row `0`, black row `7`.
+4. Promotion is queen-only for now.
+5. `Main`: has a promotion demo.
+
 Not included yet:
 
 1. Castling.
 2. En passant.
-3. Promotion.
+3. Promotion choice.
 4. Undo/redo.
 
 ## Piece Movement Rules
@@ -110,8 +120,9 @@ Not included yet:
 3. Captures one square diagonally forward.
 4. White moves toward smaller row numbers.
 5. Black moves toward larger row numbers.
+6. Promotes to queen on the last row.
 
-Out of scope: en passant, promotion.
+Out of scope: en passant, choosing promotion piece.
 
 ### Rook
 
@@ -157,8 +168,9 @@ Out of scope: castling, moving into check.
 5. Checks own king safety.
 6. Rolls back illegal self-check moves.
 7. Evaluates opponent checkmate/stalemate.
-8. Records history.
-9. Switches turn only if game remains in progress.
+8. Handles pawn promotion after accepted move.
+9. Records history.
+10. Switches turn only if game remains in progress.
 
 ### MoveValidator
 
@@ -174,7 +186,8 @@ Out of scope: castling, moving into check.
 2. Applies already-validated moves.
 3. Exposes current pieces through read-only `PiecePosition` list.
 4. Can undo a move using captured move data.
-5. Does not enforce turns or piece-specific rules.
+5. Can replace immutable pieces for promotion.
+6. Does not enforce turns or piece-specific rules.
 
 ### CheckDetector
 
@@ -202,6 +215,7 @@ Out of scope: castling, moving into check.
 7. Check detection only reads board state.
 8. A rejected self-check move must leave board, turn, and history unchanged.
 9. Checkmate/stalemate is evaluated for the opponent after a successful move.
+10. Promotion happens only after a move is accepted.
 
 ## Roadmap
 
@@ -211,11 +225,13 @@ Out of scope: castling, moving into check.
 4. Phase 4A: Check detection.
 5. Phase 4B: Prevent illegal self-check moves.
 6. Phase 4C: Checkmate and stalemate.
-7. Phase 5: Castling, en passant, promotion.
-8. Phase 6: Draw rules.
-9. Phase 7: Undo/redo with Command pattern.
-10. Phase 8: Multiple games and per-game locking.
-11. Phase 9: Persistence with Repository pattern.
+7. Phase 5A: Pawn promotion.
+8. Phase 5B: Castling.
+9. Phase 5C: En passant.
+10. Phase 6: Draw rules.
+11. Phase 7: Undo/redo with Command pattern.
+12. Phase 8: Multiple games and per-game locking.
+13. Phase 9: Persistence with Repository pattern.
 
 ## Pattern Timing
 

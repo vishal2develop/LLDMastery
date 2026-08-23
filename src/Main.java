@@ -8,6 +8,8 @@ public class Main {
         runCheckmateDemo();
         System.out.println();
         runStalemateDemo();
+        System.out.println();
+        runPromotionDemo();
     }
 
     private static void runSelfCheckRollbackDemo() {
@@ -68,6 +70,28 @@ public class Main {
         printResult("Stalemate demo", game, result);
     }
 
+    private static void runPromotionDemo() {
+        Board board = Board.createEmptyBoard();
+
+        board.placePiece(new Position(7, 7), new Piece(PieceType.KING, PieceColor.WHITE));
+        board.placePiece(new Position(7, 0), new Piece(PieceType.KING, PieceColor.BLACK));
+
+        // White pawn is one step away from promotion.
+        // White moves upward, so reaching row 0 should promote it.
+        board.placePiece(new Position(1, 4), new Piece(PieceType.PAWN, PieceColor.WHITE));
+
+        Game game = createGame("G-4", board);
+        game.startGame();
+
+        boolean result = game.makeMove(
+                new Position(1, 4),
+                new Position(0, 4)
+        );
+
+        printResult("Promotion demo", game, result);
+        printPromotedPiece(game, new Position(0, 4));
+    }
+
     private static Game createGame(String gameId, Board board) {
         Player whitePlayer = new Player("P-1","Vishal", PieceColor.WHITE);
         Player blackPlayer = new Player("P-2","Rohan", PieceColor.BLACK);
@@ -81,5 +105,13 @@ public class Main {
         System.out.println("Status: " + game.getStatus());
         System.out.println("Current turn: " + game.getCurrentTurn());
         System.out.println("History size: " + game.getMoveHistory().size());
+    }
+
+    private static void printPromotedPiece(Game game, Position position) {
+        Piece promotedPiece = game.getBoard().getPiece(position);
+
+        // This proves the pawn was replaced by a new queen on the promotion square.
+        System.out.println("Promoted piece type: " + promotedPiece.getType());
+        System.out.println("Promoted piece color: " + promotedPiece.getColor());
     }
 }
