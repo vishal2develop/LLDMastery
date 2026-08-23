@@ -104,22 +104,22 @@ Done:
 4. Promotion is queen-only for now.
 5. `Main`: has a promotion demo.
 
-### Phase 5B: King-Side Castling
+### Phase 5B: Castling
 
 Done:
 
 1. Tracks whether king or original rooks have moved.
-2. Detects king-side castling request before normal move validation.
-3. Validates king-side castling rules: unmoved pieces, clear path, no check, no passing through check.
-4. Moves both king and rook for king-side castling.
-5. `Main`: has a king-side castling demo.
+2. Detects castling requests before normal move validation.
+3. Validates castling rules: unmoved pieces, clear path, no check, no passing through check.
+4. Moves both king and rook for king-side and queen-side castling.
+5. Game-level legal move check includes castling availability.
+6. `Main`: has king-side and queen-side castling demos.
 
 Not included yet:
 
-1. Queen-side castling.
-2. En passant.
-3. Promotion choice.
-4. Undo/redo.
+1. En passant.
+2. Promotion choice.
+3. Undo/redo.
 
 ## Piece Movement Rules
 
@@ -165,8 +165,8 @@ Out of scope: en passant, choosing promotion piece.
 1. Moves one square in any direction.
 2. Destination cannot contain own piece.
 3. King-side castling moves king two columns right and rook next to king.
-
-Out of scope: queen-side castling, moving into check.
+4. Queen-side castling moves king two columns left and rook next to king.
+5. Cannot move or castle into check.
 
 ## Responsibility Split
 
@@ -180,7 +180,7 @@ Out of scope: queen-side castling, moving into check.
 6. Rolls back illegal self-check moves.
 7. Evaluates opponent checkmate/stalemate.
 8. Handles pawn promotion after accepted move.
-9. Handles king-side castling before normal move validation.
+9. Handles castling before normal move validation.
 10. Records history.
 11. Switches turn only if game remains in progress.
 
@@ -214,7 +214,8 @@ Out of scope: queen-side castling, moving into check.
 2. Tries every board square as a destination.
 3. Applies only basic-valid moves temporarily.
 4. Rejects trial moves that leave own king in check.
-5. Returns true if at least one safe move exists.
+5. Returns true if at least one safe normal move exists.
+6. Castling availability is checked by `Game`, because castling state lives there.
 
 ## Invariants
 

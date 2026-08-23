@@ -55,6 +55,10 @@ public class Game {
             return castleKingSide();
         }
 
+        if(isQueenSideCastleRequest(from, to)){
+            return castleQueenSide();
+        }
+
         // if the move is invalid, return false
         if(!moveValidator.isValidMove(board, from, to, currentTurn)){
             return false;
@@ -126,6 +130,18 @@ public class Game {
                 to.getCol() - from.getCol() == 2;
     }
 
+    private boolean isQueenSideCastleRequest(Position from, Position to){
+        // If king tries to move two columns to the left, we treat it as a queen-side castling request.
+        // This is also handled before MoveValidator because normal king movement would reject it.
+        Piece piece = board.getPiece(from);
+
+        return piece!=null &&
+                piece.getType() == PieceType.KING &&
+                piece.getColor() == currentTurn &&
+                from.getRow() == to.getRow() &&
+                from.getCol() - to.getCol() == 2;
+    }
+
     private boolean canCastleKingSide(PieceColor color){
         // King-side castling uses the right-side rook.
         // White uses row 7; black uses row 0.
@@ -170,11 +186,12 @@ public class Game {
             return false;
         }
 
-        // king should not pass through check
+        // King should not pass through check.
         if(!isSquareSafeForKing(color, kingPosition, betweenOne)){
             return false;
         }
-        //king should not land in check
+
+        // King should not land in check.
         if(!isSquareSafeForKing(color, kingPosition, betweenTwo)){
             return false;
         }
@@ -219,6 +236,37 @@ public class Game {
         return true;
     }
 
+    private boolean castleQueenSide() {
+        // If any queen-side castling rule fails, the move is rejected.
+        if(!canCastleQueenSide(currentTurn)){
+            return false;
+        }
+
+        int row = currentTurn == PieceColor.WHITE ? 7 : 0;
+
+        Position kingFrom = new Position(row, 4);
+        Position kingTo = new Position(row, 2);
+        Position rookFrom = new Position(row, 0);
+        Position rookTo = new Position(row, 3);
+
+        // Queen-side castling also moves two pieces:
+        // 1. king moves two squares to the left
+        // 2. rook moves to the square immediately right of the king
+        Move kingMove = board.movePiece(kingFrom, kingTo);
+        Move rookMove = board.movePiece(rookFrom, rookTo);
+
+        // Both king and rook have now moved, so castling state should remember that.
+        updateCastlingState(kingMove);
+        updateCastlingState(rookMove);
+
+        // For now, history stores the king move as the main castling move.
+        // Later, Command pattern can model castling as one compound move.
+        moveHistory.add(kingMove);
+
+        updateGameStatusAfterAcceptedMove();
+        return true;
+    }
+
     private void updateGameStatusAfterAcceptedMove() {
         // After current player makes an accepted move, evaluate the opponent.
         // If opponent has no legal move, the game may become checkmate or stalemate.
@@ -247,10 +295,62 @@ public class Game {
     }
 
     private boolean canCastleQueenSide(PieceColor color){
-        // Not implemented yet.
-        // Queen-side castling has the same idea as king-side castling,
-        // but the king moves two columns to the left.
-        return false;
+        // Queen-side castling uses the left-side rook.
+        // White uses row 7; black uses row 0.
+        int row = color == PieceColor.WHITE ? 7 : 0;
+
+        // Castling is not allowed if the king or that side's rook moved earlier.
+        boolean kingMoved = color == PieceColor.WHITE ? whiteKingMoved : blackKingMoved;
+        boolean rookMoved = color == PieceColor.WHITE ? whiteQueenSideRookMoved : blackQueenSideRookMoved;
+
+        // Starting positions for queen-side castling.
+        // King starts at column 4 and rook starts at column 0.
+        // Squares at columns 1, 2, and 3 must be empty.
+        Position kingPosition = new Position(row, 4);
+        Position rookPosition = new Position(row, 0);
+        Position betweenOne = new Position(row, 1);
+        Position landingSquare = new Position(row, 2);
+        Position passThroughSquare = new Position(row, 3);
+
+        if(kingMoved || rookMoved){
+            return false;
+        }
+
+        // Make sure the expected king is still on the original king square.
+        Piece king = board.getPiece(kingPosition);
+        if(king == null || king.getType() != PieceType.KING || king.getColor() != color){
+            return false;
+        }
+
+        // Make sure the expected rook is still on the queen-side rook square.
+        Piece rook = board.getPiece(rookPosition);
+        if(rook == null || rook.getType() != PieceType.ROOK || rook.getColor() != color){
+            return false;
+        }
+
+        // Queen-side has three empty squares between king and rook.
+        if(!board.isPositionEmpty(betweenOne) ||
+                !board.isPositionEmpty(landingSquare) ||
+                !board.isPositionEmpty(passThroughSquare)){
+            return false;
+        }
+
+        // A king cannot castle while it is already in check.
+        if(checkDetector.isInCheck(board, color)){
+            return false;
+        }
+
+        // King should not pass through check.
+        if(!isSquareSafeForKing(color, kingPosition, passThroughSquare)){
+            return false;
+        }
+
+        // King should not land in check.
+        if(!isSquareSafeForKing(color, kingPosition, landingSquare)){
+            return false;
+        }
+
+        return true;
     }
 
     private void updateCastlingState(Move move){
@@ -294,10 +394,6 @@ public class Game {
         }
 
     }
-
-
-
-
 
 
     // Getters

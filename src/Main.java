@@ -12,6 +12,8 @@ public class Main {
         runPromotionDemo();
         System.out.println();
         runKingSideCastlingDemo();
+        System.out.println();
+        runQueenSideCastlingDemo();
     }
 
     private static void runSelfCheckRollbackDemo() {
@@ -112,6 +114,26 @@ public class Main {
         printResult("King-side castling demo", game, result);
         System.out.println("White king castled: " + hasPiece(game.getBoard(), new Position(7, 6), PieceType.KING, PieceColor.WHITE));
         System.out.println("White rook repositioned: " + hasPiece(game.getBoard(), new Position(7, 5), PieceType.ROOK, PieceColor.WHITE));
+    }
+
+    private static void runQueenSideCastlingDemo() {
+        Board board = Board.createEmptyBoard();
+
+        board.placePiece(new Position(7, 4), new Piece(PieceType.KING, PieceColor.WHITE));
+        board.placePiece(new Position(7, 0), new Piece(PieceType.ROOK, PieceColor.WHITE));
+        board.placePiece(new Position(0, 4), new Piece(PieceType.KING, PieceColor.BLACK));
+
+        Game game = createGame("G-6", board);
+        game.startGame();
+
+        boolean result = game.makeMove(
+                new Position(7, 4),
+                new Position(7, 2)
+        );
+
+        printResult("Queen-side castling demo", game, result);
+        System.out.println("White king castled: " + hasPiece(game.getBoard(), new Position(7, 2), PieceType.KING, PieceColor.WHITE));
+        System.out.println("White rook repositioned: " + hasPiece(game.getBoard(), new Position(7, 3), PieceType.ROOK, PieceColor.WHITE));
     }
 
     private static Game createGame(String gameId, Board board) {
