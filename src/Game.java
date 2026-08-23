@@ -225,7 +225,7 @@ public class Game {
         PieceColor opponentColor = currentTurn == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE;
 
         boolean opponentHasKingInCheck = checkDetector.isInCheck(board, opponentColor);
-        boolean opponentHasLegalMove = legalMoveDetector.hasAnyLegalMove(board, opponentColor);
+        boolean opponentHasLegalMove = hasAnyLegalMove(opponentColor);
 
         if(opponentHasKingInCheck && !opponentHasLegalMove){
             status = GameStatus.CHECKMATE;
@@ -235,6 +235,15 @@ public class Game {
         else{
             switchTurn();
         }
+    }
+
+    // LegalMoveDetector = normal moves, Game = normal moves + special moves
+    private boolean hasAnyLegalMove(PieceColor color) {
+        // LegalMoveDetector checks normal piece movement.
+        // Game checks special moves like castling because Game owns castling state.
+        return legalMoveDetector.hasAnyLegalMove(board, color) ||
+                canCastleKingSide(color) ||
+                canCastleQueenSide(color);
     }
 
     private boolean canCastleQueenSide(PieceColor color){
