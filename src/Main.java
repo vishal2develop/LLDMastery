@@ -10,6 +10,8 @@ public class Main {
         runStalemateDemo();
         System.out.println();
         runPromotionDemo();
+        System.out.println();
+        runKingSideCastlingDemo();
     }
 
     private static void runSelfCheckRollbackDemo() {
@@ -92,6 +94,26 @@ public class Main {
         printPromotedPiece(game, new Position(0, 4));
     }
 
+    private static void runKingSideCastlingDemo() {
+        Board board = Board.createEmptyBoard();
+
+        board.placePiece(new Position(7, 4), new Piece(PieceType.KING, PieceColor.WHITE));
+        board.placePiece(new Position(7, 7), new Piece(PieceType.ROOK, PieceColor.WHITE));
+        board.placePiece(new Position(0, 4), new Piece(PieceType.KING, PieceColor.BLACK));
+
+        Game game = createGame("G-5", board);
+        game.startGame();
+
+        boolean result = game.makeMove(
+                new Position(7, 4),
+                new Position(7, 6)
+        );
+
+        printResult("King-side castling demo", game, result);
+        System.out.println("White king castled: " + hasPiece(game.getBoard(), new Position(7, 6), PieceType.KING, PieceColor.WHITE));
+        System.out.println("White rook repositioned: " + hasPiece(game.getBoard(), new Position(7, 5), PieceType.ROOK, PieceColor.WHITE));
+    }
+
     private static Game createGame(String gameId, Board board) {
         Player whitePlayer = new Player("P-1","Vishal", PieceColor.WHITE);
         Player blackPlayer = new Player("P-2","Rohan", PieceColor.BLACK);
@@ -113,5 +135,13 @@ public class Main {
         // This proves the pawn was replaced by a new queen on the promotion square.
         System.out.println("Promoted piece type: " + promotedPiece.getType());
         System.out.println("Promoted piece color: " + promotedPiece.getColor());
+    }
+
+    private static boolean hasPiece(Board board, Position position, PieceType type, PieceColor color) {
+        Piece piece = board.getPiece(position);
+
+        return piece != null &&
+                piece.getType() == type &&
+                piece.getColor() == color;
     }
 }

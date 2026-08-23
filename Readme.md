@@ -104,9 +104,19 @@ Done:
 4. Promotion is queen-only for now.
 5. `Main`: has a promotion demo.
 
+### Phase 5B: King-Side Castling
+
+Done:
+
+1. Tracks whether king or original rooks have moved.
+2. Detects king-side castling request before normal move validation.
+3. Validates king-side castling rules: unmoved pieces, clear path, no check, no passing through check.
+4. Moves both king and rook for king-side castling.
+5. `Main`: has a king-side castling demo.
+
 Not included yet:
 
-1. Castling.
+1. Queen-side castling.
 2. En passant.
 3. Promotion choice.
 4. Undo/redo.
@@ -154,8 +164,9 @@ Out of scope: en passant, choosing promotion piece.
 
 1. Moves one square in any direction.
 2. Destination cannot contain own piece.
+3. King-side castling moves king two columns right and rook next to king.
 
-Out of scope: castling, moving into check.
+Out of scope: queen-side castling, moving into check.
 
 ## Responsibility Split
 
@@ -169,8 +180,9 @@ Out of scope: castling, moving into check.
 6. Rolls back illegal self-check moves.
 7. Evaluates opponent checkmate/stalemate.
 8. Handles pawn promotion after accepted move.
-9. Records history.
-10. Switches turn only if game remains in progress.
+9. Handles king-side castling before normal move validation.
+10. Records history.
+11. Switches turn only if game remains in progress.
 
 ### MoveValidator
 
@@ -216,6 +228,8 @@ Out of scope: castling, moving into check.
 8. A rejected self-check move must leave board, turn, and history unchanged.
 9. Checkmate/stalemate is evaluated for the opponent after a successful move.
 10. Promotion happens only after a move is accepted.
+11. Castling updates both king and rook positions.
+12. Castling history stores the king move only for now.
 
 ## Roadmap
 
